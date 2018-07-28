@@ -1,5 +1,6 @@
 // Copyright (c) 2012-2013 The PPCoin developers
 // Copyright (c) 2015-2018 The PIVX developers
+// Copyright (c) 2015-2018 The Whistle AI developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,7 +13,7 @@
 #include "timedata.h"
 #include "util.h"
 #include "stakeinput.h"
-#include "zpivchain.h"
+#include "zwislchain.h"
 
 using namespace std;
 
@@ -97,7 +98,7 @@ static bool SelectBlockFromCandidates(
 
         //if the lowest block height (vSortedByTimestamp[0]) is >= switch height, use new modifier calc
         if (fFirstRun){
-            fModifierV2 = pindex->nHeight >= Params().ModifierUpgradeBlock();
+            //fModifierV2 = pindex->nHeight >= Params().ModifierUpgradeBlock();
             fFirstRun = false;
         }
 
@@ -358,7 +359,7 @@ bool CheckProofOfStake(const CBlock block, uint256& hashProofOfStake, std::uniqu
         if (spend.getSpendType() != libzerocoin::SpendType::STAKE)
             return error("%s: spend is using the wrong SpendType (%d)", __func__, (int)spend.getSpendType());
 
-        stake = std::unique_ptr<CStakeInput>(new CZPivStake(spend));
+        stake = std::unique_ptr<CStakeInput>(new CZWislStake(spend));
     } else {
         // First try finding the previous transaction in database
         uint256 hashBlock;
@@ -370,9 +371,9 @@ bool CheckProofOfStake(const CBlock block, uint256& hashProofOfStake, std::uniqu
         if (!VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&tx, 0)))
             return error("CheckProofOfStake() : VerifySignature failed on coinstake %s", tx.GetHash().ToString().c_str());
 
-        CPivStake* pivInput = new CPivStake();
-        pivInput->SetInput(txPrev, txin.prevout.n);
-        stake = std::unique_ptr<CStakeInput>(pivInput);
+        CWislStake* wislInput = new CWislStake();
+        wislInput->SetInput(txPrev, txin.prevout.n);
+        stake = std::unique_ptr<CStakeInput>(wislInput);
     }
 
     CBlockIndex* pindex = stake->GetIndexFrom();

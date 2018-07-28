@@ -11,10 +11,10 @@
 
 /**
  * Name of client reported in the 'version' message. Report the same name
- * for both pivxd and pivx-qt, to make it harder for attackers to
+ * for both whistled and whistle-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("PIVX Core");
+const std::string CLIENT_NAME("Whistle AI Core");
 
 /**
  * Client version number
@@ -92,8 +92,8 @@ std::string FormatFullVersion()
     return CLIENT_BUILD;
 }
 
-/** 
- * Format the subversion field according to BIP 14 spec (https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki) 
+/**
+ * Format the subversion field according to BIP 14 spec (https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki)
  */
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments)
 {

@@ -231,7 +231,7 @@ bool IsBlockPayeeValid(const CBlock& block, int nBlockHeight)
         return true;
     }
 
-    const CTransaction& txNew = (nBlockHeight > Params().LAST_POW_BLOCK() ? block.vtx[1] : block.vtx[0]);
+    const CTransaction& txNew = block.vtx[1];
 
     //check if it's a budget block
     if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)) {
@@ -269,7 +269,7 @@ bool IsBlockPayeeValid(const CBlock& block, int nBlockHeight)
 }
 
 
-void FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStake, bool fZPIVStake)
+void FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStake, bool fZWISLStake)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (!pindexPrev) return;
@@ -277,7 +277,7 @@ void FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStak
     if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS) && budget.IsBudgetPaymentBlock(pindexPrev->nHeight + 1)) {
         budget.FillBlockPayee(txNew, nFees, fProofOfStake);
     } else {
-        masternodePayments.FillBlockPayee(txNew, nFees, fProofOfStake, fZPIVStake);
+        masternodePayments.FillBlockPayee(txNew, nFees, fProofOfStake, fZWISLStake);
     }
 }
 
@@ -290,7 +290,7 @@ std::string GetRequiredPaymentsString(int nBlockHeight)
     }
 }
 
-void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStake, bool fZPIVStake)
+void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStake, bool fZWISLStake)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (!pindexPrev) return;
@@ -311,29 +311,24 @@ void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFe
     }
 
     CAmount blockValue = GetBlockValue(pindexPrev->nHeight);
-    CAmount masternodePayment = GetMasternodePayment(pindexPrev->nHeight, blockValue, 0, fZPIVStake);
+    CAmount masternodePayment = GetMasternodePayment(pindexPrev->nHeight, blockValue, 0, fZWISLStake);
 
     if (hasPayment) {
-        if (fProofOfStake) {
-            /**For Proof Of Stake vout[0] must be null
-             * Stake reward can be split into many different outputs, so we must
-             * use vout.size() to align with several different cases.
-             * An additional output is appended as the masternode payment
-             */
-            unsigned int i = txNew.vout.size();
-            txNew.vout.resize(i + 1);
-            txNew.vout[i].scriptPubKey = payee;
-            txNew.vout[i].nValue = masternodePayment;
 
-            //subtract mn payment from the stake reward
-            if (!txNew.vout[1].IsZerocoinMint())
-                txNew.vout[i - 1].nValue -= masternodePayment;
-        } else {
-            txNew.vout.resize(2);
-            txNew.vout[1].scriptPubKey = payee;
-            txNew.vout[1].nValue = masternodePayment;
-            txNew.vout[0].nValue = blockValue - masternodePayment;
-        }
+        /**For Proof Of Stake vout[0] must be null
+         * Stake reward can be split into many different outputs, so we must
+         * use vout.size() to align with several different cases.
+         * An additional output is appended as the masternode payment
+         */
+        unsigned int i = txNew.vout.size();
+        txNew.vout.resize(i + 1);
+        txNew.vout[i].scriptPubKey = payee;
+        txNew.vout[i].nValue = masternodePayment;
+
+        //subtract mn payment from the stake reward
+        if (!txNew.vout[1].IsZerocoinMint())
+            txNew.vout[i - 1].nValue -= masternodePayment;
+
 
         CTxDestination address1;
         ExtractDestination(payee, address1);

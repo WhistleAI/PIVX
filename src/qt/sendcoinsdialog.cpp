@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2018 The PIVX developers
+// Copyright (c) 2015-2018 The WISLX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -59,7 +59,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent, Qt::WindowSy
     connect(ui->splitBlockCheckBox, SIGNAL(stateChanged(int)), this, SLOT(splitBlockChecked(int)));
     connect(ui->splitBlockLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(splitBlockLineEditChanged(const QString&)));
 
-    // PIVX specific
+    // Whistle AI specific
     QSettings settings;
     if (!settings.contains("bUseObfuScation"))
         settings.setValue("bUseObfuScation", false);
@@ -134,7 +134,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent, Qt::WindowSy
     ui->customFee->setValue(settings.value("nTransactionFee").toLongLong());
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     ui->checkBoxFreeTx->setChecked(settings.value("fSendFreeTransactions").toBool());
-    ui->checkzPIV->hide();
+    ui->checkzWISL->hide();
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
 }
 
@@ -162,7 +162,7 @@ void SendCoinsDialog::setModel(WalletModel* model)
         setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(),
                    model->getZerocoinBalance (), model->getUnconfirmedZerocoinBalance (), model->getImmatureZerocoinBalance (),
                    model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(CAmount, CAmount,  CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
+        connect(model, SIGNAL(balanceChanged(CAmount, CAmount,  CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this,
                          SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
         updateDisplayUnit();
@@ -321,7 +321,7 @@ void SendCoinsDialog::on_sendButton_clicked()
     // will call relock
     WalletModel::EncryptionStatus encStatus = model->getEncryptionStatus();
     if (encStatus == model->Locked || encStatus == model->UnlockedForAnonymizationOnly) {
-        WalletModel::UnlockContext ctx(model->requestUnlock(AskPassphraseDialog::Context::Send_PIV, true));
+        WalletModel::UnlockContext ctx(model->requestUnlock(AskPassphraseDialog::Context::Send_WISL, true));
         if (!ctx.isValid()) {
             // Unlock wallet was cancelled
             fNewRecipientAllowed = true;
@@ -543,7 +543,7 @@ bool SendCoinsDialog::handlePaymentRequest(const SendCoinsRecipient& rv)
     return true;
 }
 
-void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, 
+void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
                                  const CAmount& zerocoinBalance, const CAmount& unconfirmedZerocoinBalance, const CAmount& immatureZerocoinBalance,
                                  const CAmount& watchBalance, const CAmount& watchUnconfirmedBalance, const CAmount& watchImmatureBalance)
 {
@@ -568,7 +568,7 @@ void SendCoinsDialog::updateDisplayUnit()
     TRY_LOCK(cs_main, lockMain);
     if (!lockMain) return;
 
-    setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), 
+    setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(),
                model->getZerocoinBalance (), model->getUnconfirmedZerocoinBalance (), model->getImmatureZerocoinBalance (),
                model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
     coinControlUpdateLabels();
@@ -588,7 +588,7 @@ void SendCoinsDialog::updateSwiftTX()
 void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn& sendCoinsReturn, const QString& msgArg, bool fPrepare)
 {
     bool fAskForUnlock = false;
-    
+
     QPair<QString, CClientUIInterface::MessageBoxFlags> msgParams;
     // Default to a warning message, override if error message is needed
     msgParams.second = CClientUIInterface::MSG_WARNING;
@@ -883,7 +883,7 @@ void SendCoinsDialog::coinControlChangeEdited(const QString& text)
             ui->labelCoinControlChangeLabel->setText("");
         } else if (!addr.IsValid()) // Invalid address
         {
-            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid PIVX address"));
+            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid WISL address"));
         } else // Valid address
         {
             CPubKey pubkey;
