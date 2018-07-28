@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=WhistleAI
+Comment=WhistleAI P2P Information Authentication Network and Marketplace
+Exec=whistle-qt %u
+Terminal=false
+Type=Application
+Icon=whistleai128
+MimeType=x-scheme-handler/whistle;
+Categories=Office;Finance;

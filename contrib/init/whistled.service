@@ -1,0 +1,26 @@
+[Unit]
+Description=WhistleAI's distributed p2p daemon
+After=network.target
+
+[Service]
+User=whistle
+Group=whistle
+
+Type=forking
+PIDFile=/var/lib/whistled/whistled.pid
+
+ExecStart=/usr/bin/whistled -daemon -pid=/var/lib/whistled/whistled.pid \
+          -conf=/etc/whistleai/whistle.conf -datadir=/var/lib/whistled
+
+ExecStop=-/usr/bin/whistle-cli -conf=/etc/whistleai/whistle.conf \
+         -datadir=/var/lib/whistled stop
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

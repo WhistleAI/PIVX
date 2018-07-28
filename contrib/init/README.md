@@ -1,10 +1,10 @@
 Sample configuration files for:
 
-SystemD: pivxd.service
-Upstart: pivxd.conf
-OpenRC:  pivxd.openrc
-         pivxd.openrcconf
-CentOS:  pivxd.init
+SystemD: whistled.service
+Upstart: whistled.conf
+OpenRC:  whistled.openrc
+         whistled.openrcconf
+CentOS:  whistled.init
 
 have been made available to assist packagers in creating node packages here.
 

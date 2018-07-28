@@ -9,8 +9,8 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between pivx-cli and pivxd)
- * of a given instance of the Pivx system.
+ * CBaseChainParams defines the base parameters (shared between whistle-cli and whistled)
+ * of a given instance of the WhistleAI system.
  */
 class CBaseChainParams
 {

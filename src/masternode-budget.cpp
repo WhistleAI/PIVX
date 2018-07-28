@@ -1,5 +1,6 @@
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2018 The Whistle AI developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -139,6 +140,7 @@ void CBudgetManager::SubmitFinalBudget()
         LogPrint("masternode","CBudgetManager::SubmitFinalBudget - nSubmittedHeight(=%ld) < nBlockStart(=%ld) condition not fulfilled.\n", nSubmittedHeight, nBlockStart);
         return;
     }
+
     // Submit final budget during the last 2 days before payment for Mainnet, about 9 minutes for Testnet
     int nFinalizationStart = nBlockStart - ((GetBudgetPaymentCycleBlocks() / 30) * 2);
     int nOffsetToStart = nFinalizationStart - nCurrentHeight;
@@ -837,41 +839,47 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
         CAmount nSubsidy = 500 * COIN;
         return ((nSubsidy / 100) * 10) * 146;
     }
+    else
+    {
+      CAmount nSubsidy = GetBlockValue(nHeight);
 
-    //get block value and calculate from that
-    CAmount nSubsidy = 0;
-    if (nHeight <= Params().LAST_POW_BLOCK() && nHeight >= 151200) {
-        nSubsidy = 50 * COIN;
-    } else if (nHeight <= 302399 && nHeight > Params().LAST_POW_BLOCK()) {
-        nSubsidy = 50 * COIN;
-    } else if (nHeight <= 345599 && nHeight >= 302400) {
-        nSubsidy = 45 * COIN;
-    } else if (nHeight <= 388799 && nHeight >= 345600) {
-        nSubsidy = 40 * COIN;
-    } else if (nHeight <= 431999 && nHeight >= 388800) {
-        nSubsidy = 35 * COIN;
-    } else if (nHeight <= 475199 && nHeight >= 432000) {
-        nSubsidy = 30 * COIN;
-    } else if (nHeight <= 518399 && nHeight >= 475200) {
-        nSubsidy = 25 * COIN;
-    } else if (nHeight <= 561599 && nHeight >= 518400) {
-        nSubsidy = 20 * COIN;
-    } else if (nHeight <= 604799 && nHeight >= 561600) {
-        nSubsidy = 15 * COIN;
-    } else if (nHeight <= 647999 && nHeight >= 604800) {
-        nSubsidy = 10 * COIN;
-    } else if (nHeight >= 648000) {
-        nSubsidy = 5 * COIN;
-    } else {
-        nSubsidy = 0 * COIN;
+      //get block value and calculate from that
+      /*
+      if (nHeight <= 302399 && nHeight > 1) {
+          nSubsidy = 50 * COIN;
+      } else if (nHeight <= 345599 && nHeight >= 302400) {
+          nSubsidy = 45 * COIN;
+      } else if (nHeight <= 388799 && nHeight >= 345600) {
+          nSubsidy = 40 * COIN;
+      } else if (nHeight <= 431999 && nHeight >= 388800) {
+          nSubsidy = 35 * COIN;
+      } else if (nHeight <= 475199 && nHeight >= 432000) {
+          nSubsidy = 30 * COIN;
+      } else if (nHeight <= 518399 && nHeight >= 475200) {
+          nSubsidy = 25 * COIN;
+      } else if (nHeight <= 561599 && nHeight >= 518400) {
+          nSubsidy = 20 * COIN;
+      } else if (nHeight <= 604799 && nHeight >= 561600) {
+          nSubsidy = 15 * COIN;
+      } else if (nHeight <= 647999 && nHeight >= 604800) {
+          nSubsidy = 10 * COIN;
+      } else {
+          nSubsidy = 5 * COIN;
+      }
+      // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
+      if (nHeight <= 172800) {
+          return 648000 * COIN;
+      } else {
+          return ((nSubsidy / 100) * 10) * 1440 * 30;
+      }
+      */
+      return ((nSubsidy / 100) * 5) * 1440 * 30;
+
     }
 
-    // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
-    if (nHeight <= 172800) {
-        return 648000 * COIN;
-    } else {
-        return ((nSubsidy / 100) * 10) * 1440 * 30;
-    }
+
+
+
 }
 
 void CBudgetManager::NewBlock()
@@ -1935,6 +1943,7 @@ std::string CFinalizedBudget::GetStatus()
 
 bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
 {
+
     // Must be the correct block for payment to happen (once a month)
     if (nBlockStart % GetBudgetPaymentCycleBlocks() != 0) {
         strError = "Invalid BlockStart";
@@ -1985,13 +1994,7 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (pindexPrev == NULL) return true;
 
-// TODO: verify if we can safely remove this
-//
-//    if (nBlockStart < pindexPrev->nHeight - 100) {
-//        strError = "Budget " + strBudgetName + " Older than current blockHeight" ;
-//        return false;
-//    }
-
+    
     return true;
 }
 
@@ -2010,6 +2013,7 @@ bool CFinalizedBudget::IsTransactionValid(const CTransaction& txNew, int nBlockH
 
     bool found = false;
     BOOST_FOREACH (CTxOut out, txNew.vout) {
+
         if (vecBudgetPayments[nCurrentBudgetPayment].payee == out.scriptPubKey && vecBudgetPayments[nCurrentBudgetPayment].nAmount == out.nValue) {
             found = true;
             LogPrint("masternode","CFinalizedBudget::IsTransactionValid - Found valid Budget Payment of %d for %d\n",

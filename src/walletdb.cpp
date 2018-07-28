@@ -843,7 +843,7 @@ DBErrors CWalletDB::ZapWalletTx(CWallet* pwallet, vector<CWalletTx>& vWtx)
 void ThreadFlushWalletDB(const string& strFile)
 {
     // Make this thread recognisable as the wallet flushing thread
-    RenameThread("pivx-wallet");
+    RenameThread("whistle-wallet");
 
     static bool fOneThread;
     if (fOneThread)
@@ -1152,6 +1152,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
             }
         }
 
+
         if (fMaturedOnly || fUpdateStatus) {
             //if there is not a record of the block height, then look it up and assign it
             if (!mint.GetHeight()) {
@@ -1278,7 +1279,7 @@ std::list<CBigNum> CWalletDB::ListSpentCoinsSerial()
 {
     std::list<CBigNum> listPubCoin;
     std::list<CZerocoinSpend> listCoins = ListSpentCoins();
-    
+
     for ( auto& coin : listCoins) {
         listPubCoin.push_back(coin.GetSerial());
     }

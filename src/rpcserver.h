@@ -96,7 +96,7 @@ public:
 };
 
 /**
- * PIVX RPC command dispatcher.
+ * WhistleP2P RPC command dispatcher.
  */
 class CRPCTable
 {
@@ -297,5 +297,6 @@ extern bool HTTPReq_REST(AcceptedConnection* conn,
     std::string& strURI,
     std::map<std::string, std::string>& mapHeaders,
     bool fRun);
+
 
 #endif // BITCOIN_RPCSERVER_H

@@ -1,0 +1,35 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource prefix="/translations">
+        <file alias="bg">locale/whistle_bg.qm</file>
+        <file alias="ca">locale/whistle_ca.qm</file>
+        <file alias="cs">locale/whistle_cs.qm</file>
+        <file alias="da">locale/whistle_da.qm</file>
+        <file alias="de">locale/whistle_de.qm</file>
+        <file alias="en">locale/whistle_en.qm</file>
+        <file alias="en_US">locale/whistle_en_US.qm</file>
+        <file alias="es">locale/whistle_es.qm</file>
+        <file alias="es_ES">locale/whistle_es_ES.qm</file>
+        <file alias="fi">locale/whistle_fi.qm</file>
+        <file alias="fr_FR">locale/whistle_fr_FR.qm</file>
+        <file alias="hi_IN">locale/whistle_hi_IN.qm</file>
+        <file alias="hr">locale/whistle_hr.qm</file>
+        <file alias="hr_HR">locale/whistle_hr_HR.qm</file>
+        <file alias="it">locale/whistle_it.qm</file>
+        <file alias="ja">locale/whistle_ja.qm</file>
+        <file alias="ko_KR">locale/whistle_ko_KR.qm</file>
+        <file alias="lt_LT">locale/whistle_lt_LT.qm</file>
+        <file alias="nl">locale/whistle_nl.qm</file>
+        <file alias="pl">locale/whistle_pl.qm</file>
+        <file alias="pt">locale/whistle_pt.qm</file>
+        <file alias="pt_BR">locale/whistle_pt_BR.qm</file>
+        <file alias="ro_RO">locale/whistle_ro_RO.qm</file>
+        <file alias="ru">locale/whistle_ru.qm</file>
+        <file alias="sk">locale/whistle_sk.qm</file>
+        <file alias="sv">locale/whistle_sv.qm</file>
+        <file alias="tr">locale/whistle_tr.qm</file>
+        <file alias="uk">locale/whistle_uk.qm</file>
+        <file alias="vi">locale/whistle_vi.qm</file>
+        <file alias="zh_CN">locale/whistle_zh_CN.qm</file>
+        <file alias="zh_TW">locale/whistle_zh_TW.qm</file>
+    </qresource>
+</RCC>
