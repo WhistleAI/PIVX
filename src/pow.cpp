@@ -119,13 +119,11 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
     // Check range
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > Params().ProofOfWorkLimit())
     {
-        printf("CheckProofOfWork() : nBits below minimum work bnTarget=%d > POWl=%d\n",bnTarget.getdouble() , Params().ProofOfWorkLimit().getdouble());
         return error("CheckProofOfWork() : nBits below minimum work");
     }
     // Check proof of work matches claimed amount
     if (hash > bnTarget)
     {
-        printf("CheckProofOfWork() : hash doesn't match nBits %s > %s\n",hash.ToString().c_str(),bnTarget.ToString().c_str());
         return error("CheckProofOfWork() : hash doesn't match nBits");
     }
     return true;

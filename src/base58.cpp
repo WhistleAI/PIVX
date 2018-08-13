@@ -166,6 +166,7 @@ void CBase58Data::SetData(const std::vector<unsigned char>& vchVersionIn, const 
 {
     vchVersion = vchVersionIn;
     vchData.resize(nSize);
+
     if (!vchData.empty())
         memcpy(&vchData[0], pdata, nSize);
 }
@@ -236,6 +237,7 @@ public:
 
 bool CBitcoinAddress::Set(const CKeyID& id)
 {
+
     SetData(Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
     return true;
 }
@@ -290,6 +292,7 @@ bool CBitcoinAddress::GetKeyID(CKeyID& keyID) const
 
 bool CBitcoinAddress::IsScript() const
 {
+
     return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
 }
 
@@ -318,6 +321,7 @@ bool CBitcoinSecret::IsValid() const
 
 bool CBitcoinSecret::SetString(const char* pszSecret)
 {
+    
     return CBase58Data::SetString(pszSecret) && IsValid();
 }
 

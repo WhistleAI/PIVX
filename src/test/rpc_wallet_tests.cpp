@@ -4,9 +4,10 @@
 
 #include "rpcserver.h"
 #include "rpcclient.h"
-
+#include "key.h"
 #include "base58.h"
 #include "wallet.h"
+#include "uint256.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/test/unit_test.hpp>
@@ -18,6 +19,7 @@ extern Array createArgs(int nRequired, const char* address1 = NULL, const char* 
 extern Value CallRPC(string args);
 
 extern CWallet* pwalletMain;
+
 
 BOOST_AUTO_TEST_SUITE(rpc_wallet_tests)
 
@@ -37,6 +39,9 @@ BOOST_AUTO_TEST_CASE(rpc_addmultisig)
     BOOST_CHECK_NO_THROW(v = addmultisig(createArgs(1, address1Hex), false));
     address.SetString(v.get_str());
     BOOST_CHECK(address.IsValid() && address.IsScript());
+    CKeyID keyID;
+    address.GetKeyID(keyID);
+    cout << "Script Wallet address: " << address.ToString().c_str() << "\n";
 
     BOOST_CHECK_NO_THROW(v = addmultisig(createArgs(1, address1Hex, address2Hex), false));
     address.SetString(v.get_str());
@@ -87,11 +92,11 @@ BOOST_AUTO_TEST_CASE(rpc_wallet)
      * 			setaccount
      *********************************/
     BOOST_CHECK_NO_THROW(CallRPC("setaccount " + setaccountDemoAddress.ToString() + " nullaccount"));
-    /* D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5R is not owned by the test wallet. */
-    BOOST_CHECK_THROW(CallRPC("setaccount D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5R nullaccount"), runtime_error);
+    /* wC7WQpNqVndhfiEUnhyk2dGoohg3i8XrdE is not owned by the test wallet. */
+    BOOST_CHECK_THROW(CallRPC("setaccount wC7WQpNqVndhfiEUnhyk2dGoohg3i8XrdE nullaccount"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("setaccount"), runtime_error);
-    /* D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5 (33 chars) is an illegal address (should be 34 chars) */
-    BOOST_CHECK_THROW(CallRPC("setaccount D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5 nullaccount"), runtime_error);
+    /* wC7WQpNqVndhfiEUnhyk2dGoohg3i8Xrd (33 chars) is an illegal address (should be 34 chars) */
+    BOOST_CHECK_THROW(CallRPC("setaccount wC7WQpNqVndhfiEUnhyk2dGoohg3i8Xrd nullaccount"), runtime_error);
 
     /*********************************
      * 			listunspent
@@ -142,6 +147,7 @@ BOOST_AUTO_TEST_CASE(rpc_wallet)
     BOOST_CHECK_NO_THROW(CallRPC("getaccountaddress accountThatDoesntExists")); // Should generate a new account
     BOOST_CHECK_NO_THROW(retValue = CallRPC("getaccountaddress " + strAccount));
     BOOST_CHECK(CBitcoinAddress(retValue.get_str()).Get() == demoAddress.Get());
+    printf("Pub Wallet address:%s\n",demoAddress.ToString().c_str());
 
     /*********************************
      * 			getaccount
@@ -149,21 +155,27 @@ BOOST_AUTO_TEST_CASE(rpc_wallet)
     BOOST_CHECK_THROW(CallRPC("getaccount"), runtime_error);
     BOOST_CHECK_NO_THROW(CallRPC("getaccount " + demoAddress.ToString()));
 
+
+    /*********************************
+     * 	dumpprivkey
+     *********************************/
+    BOOST_CHECK_NO_THROW(retValue = CallRPC("dumpprivkey " + demoAddress.ToString()));
+    printf("Private Key:%s\n",retValue.get_str().c_str());
     /*********************************
      * 	signmessage + verifymessage
      *********************************/
     BOOST_CHECK_NO_THROW(retValue = CallRPC("signmessage " + demoAddress.ToString() + " mymessage"));
     BOOST_CHECK_THROW(CallRPC("signmessage"), runtime_error);
     /* Should throw error because this address is not loaded in the wallet */
-    BOOST_CHECK_THROW(CallRPC("signmessage D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5R mymessage"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("signmessage WXpv4XMf4yBW54iVT9cFggwWvCENBjyRC4 mymessage"), runtime_error);
 
     /* missing arguments */
     BOOST_CHECK_THROW(CallRPC("verifymessage " + demoAddress.ToString()), runtime_error);
     BOOST_CHECK_THROW(CallRPC("verifymessage " + demoAddress.ToString() + " " + retValue.get_str()), runtime_error);
     /* Illegal address */
-    BOOST_CHECK_THROW(CallRPC("verifymessage D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5 " + retValue.get_str() + " mymessage"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("verifymessage WbvRq3aSeaVJ6ptFkyHSFmkopHhAtpU62 " + retValue.get_str() + " mymessage"), runtime_error);
     /* wrong address */
-    BOOST_CHECK(CallRPC("verifymessage D8w12Vu3WVhn543dgrUUf9uYu6HLwnPm5R " + retValue.get_str() + " mymessage").get_bool() == false);
+    BOOST_CHECK(CallRPC("verifymessage WbvRq3aSeaVJ6ptFkyHSFmkopHhAtpU62y " + retValue.get_str() + " mymessage").get_bool() == false);
     /* Correct address and signature but wrong message */
     BOOST_CHECK(CallRPC("verifymessage " + demoAddress.ToString() + " " + retValue.get_str() + " wrongmessage").get_bool() == false);
     /* Correct address, message and signature*/

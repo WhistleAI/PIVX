@@ -608,7 +608,7 @@ bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
         ++it;
     }
 
-    LogPrint("masternode","CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n", 
+    LogPrint("masternode","CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n",
               nHighestCount, nFivePercent, mapFinalizedBudgets.size());
 
     // If budget doesn't have 5% of the network votes, then we should pay a masternode instead
@@ -639,7 +639,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
         ++it;
     }
 
-    LogPrint("masternode","CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n", 
+    LogPrint("masternode","CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n",
               nHighestCount, nFivePercent, mapFinalizedBudgets.size());
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
@@ -833,48 +833,30 @@ std::string CBudgetManager::GetRequiredPaymentsString(int nBlockHeight)
 
 CAmount CBudgetManager::GetTotalBudget(int nHeight)
 {
+    int64_t cycleLength = 60 * 24 * 30; // month in minutes
+    int64_t nBudget = 0;
     if (chainActive.Tip() == NULL) return 0;
 
     if (Params().NetworkID() == CBaseChainParams::TESTNET) {
         CAmount nSubsidy = 500 * COIN;
-        return ((nSubsidy / 100) * 10) * 146;
+        int64_t nBudget = ((nSubsidy/100)*10) * 146;
+        return nBudget;
     }
     else
     {
       CAmount nSubsidy = GetBlockValue(nHeight);
-
       //get block value and calculate from that
-      /*
-      if (nHeight <= 302399 && nHeight > 1) {
-          nSubsidy = 50 * COIN;
-      } else if (nHeight <= 345599 && nHeight >= 302400) {
-          nSubsidy = 45 * COIN;
-      } else if (nHeight <= 388799 && nHeight >= 345600) {
-          nSubsidy = 40 * COIN;
-      } else if (nHeight <= 431999 && nHeight >= 388800) {
-          nSubsidy = 35 * COIN;
-      } else if (nHeight <= 475199 && nHeight >= 432000) {
-          nSubsidy = 30 * COIN;
-      } else if (nHeight <= 518399 && nHeight >= 475200) {
-          nSubsidy = 25 * COIN;
-      } else if (nHeight <= 561599 && nHeight >= 518400) {
-          nSubsidy = 20 * COIN;
-      } else if (nHeight <= 604799 && nHeight >= 561600) {
-          nSubsidy = 15 * COIN;
-      } else if (nHeight <= 647999 && nHeight >= 604800) {
-          nSubsidy = 10 * COIN;
+      if (nHeight == 0){
+          nBudget = 0;
+      } else if (nHeight <= 561600) {
+          nBudget = ((nSubsidy /100)*5) * cycleLength; // 5% budget only for merit officers
+      } else if (nHeight <= 5270401) {
+          nBudget = ((nSubsidy / 100) * 10) * cycleLength; // 5% budget for merit officers 5% for eleted develoeprs
       } else {
-          nSubsidy = 5 * COIN;
+          nBudget = ((nSubsidy / 100) * 20) * cycleLength; // 10% for merit officers an 10% for elected developers
       }
-      // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
-      if (nHeight <= 172800) {
-          return 648000 * COIN;
-      } else {
-          return ((nSubsidy / 100) * 10) * 1440 * 30;
-      }
-      */
-      return ((nSubsidy / 100) * 5) * 1440 * 30;
 
+      return nBudget;
     }
 
 
@@ -1994,7 +1976,7 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (pindexPrev == NULL) return true;
 
-    
+
     return true;
 }
 

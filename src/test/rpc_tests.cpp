@@ -94,14 +94,13 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
     Value r;
     // input is a 1-of-2 multisig (so is output):
     string prevout =
-      "[{\"txid\":\"dd2888870cdc3f6e92661f6b0829667ee4bb07ed086c44205e726bbf3338f726\","
-      "\"vout\":1,\"scriptPubKey\":\"a914f5404a39a4799d8710e15db4c4512c5e06f97fed87\","
-      "\"redeemScript\":\"5121021431a18c7039660cd9e3612a2a47dc53b69cb38ea4ad743b7df8245fd0438f8e21029bbeff390ce736bd396af43b52a1c14ed52c086b1e5585c15931f68725772bac52ae\"}]";
-    r = CallRPC(string("createrawtransaction ")+prevout+" "+
-      "{\"6ckcNMWRYgTnPcrTXCdwhDnMLwj3zwseej\":1}");
+      "[{\"txid\":\"d21633ba23f70118185227be58a63527675641ad37967e2aa461559f577aec43\","
+      "\"vout\":1,\"scriptPubKey\":\"a9140dea48fc8c87259512252e244ef2081a367665f587\","
+      "\"redeemScript\":\"514104d47734693e83b3793c002c6707ed0ae0bf3c96a947e453379b5b9c4bec703cbd5b49c5abe64dc42c83b268a96a253b85fa250acff265d8947f846ac5df9b01e34104bc155b6df5003ca2fa801c942ebfc8673b6a7be3e82d10ddc3ace712ade2ae8c657dc5494f7fd0f35b9d41e307655b254b5d30cfe009b16fc5179b618fc3a8f052ae\"}]";
+    r = CallRPC(string("createrawtransaction ")+prevout+" "+"{\"WmUCSnPHsoHmfgHAHXAxhUy7Sn8oxFoDgY\":1}");
     string notsigned = r.get_str();
-    string privkey1 = "\"YVobcS47fr6kceZy9LzLJR8WQ6YRpUwYKoJhrnEXepebMxaSpbnn\"";
-    string privkey2 = "\"YRyMjG8hbm8jHeDMAfrzSeHq5GgAj7kuHFvJtMudCUH3sCkq1WtA\"";
+    string privkey1 = "\"7yiqG2VPhY4eqXp1ZicvFiGPH3YjkcUBx6Lc9ywPW7JjAbexPn8\"";
+    string privkey2 = "\"7zNMLjzR66D1WhC26sUbAoHNriaNKSb3zNuJ2Jaa8LZhNuxTNFa\"";
     r = CallRPC(string("signrawtransaction ")+notsigned+" "+prevout+" "+"[]");
     BOOST_CHECK(find_value(r.get_obj(), "complete").get_bool() == false);
     r = CallRPC(string("signrawtransaction ")+notsigned+" "+prevout+" "+"["+privkey1+","+privkey2+"]");

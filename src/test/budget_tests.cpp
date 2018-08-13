@@ -25,8 +25,24 @@ BOOST_AUTO_TEST_CASE(budget_value)
     CheckBudgetValue(nHeightTest, "testnet", 7300*COIN);
 
     SelectParams(CBaseChainParams::MAIN);
-    nHeightTest = Params().Zerocoin_Block_V2_Start() + 1;
-    CheckBudgetValue(nHeightTest, "mainnet", 108000*COIN);
+    nHeightTest = 0;
+    CheckBudgetValue(nHeightTest, "mainnet", 0);
+    nHeightTest = 100000;
+    CheckBudgetValue(nHeightTest, "mainnet", 1944000*COIN);
+    nHeightTest = 200000;
+    CheckBudgetValue(nHeightTest, "mainnet", 1728000*COIN);
+    nHeightTest = 300000;
+    CheckBudgetValue(nHeightTest, "mainnet", 1512000*COIN);
+    nHeightTest = 400000;
+    CheckBudgetValue(nHeightTest, "mainnet", 864000*COIN);
+    nHeightTest = 500000;
+    CheckBudgetValue(nHeightTest, "mainnet", 432000*COIN);
+    nHeightTest = 600000;
+    CheckBudgetValue(nHeightTest, "mainnet", 216000*COIN);
+    nHeightTest = 1000000;
+    CheckBudgetValue(nHeightTest, "mainnet", 129600*COIN);
+    nHeightTest = 6000000;
+    CheckBudgetValue(nHeightTest, "mainnet", 69120*COIN);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
