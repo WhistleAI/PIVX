@@ -22,6 +22,10 @@
 #define MASTERNODE_REMOVAL_SECONDS (130 * 60)
 #define MASTERNODE_CHECK_SECONDS 5
 
+
+static const float MASTERNODE_COLLATERAL_AMOUNT = 50000.00;
+static const CAmount MASTERNODE_COLLATERAL = MASTERNODE_COLLATERAL_AMOUNT * COIN;
+
 using namespace std;
 
 class CMasternode;

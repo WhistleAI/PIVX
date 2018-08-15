@@ -147,7 +147,6 @@ BOOST_AUTO_TEST_CASE(rpc_wallet)
     BOOST_CHECK_NO_THROW(CallRPC("getaccountaddress accountThatDoesntExists")); // Should generate a new account
     BOOST_CHECK_NO_THROW(retValue = CallRPC("getaccountaddress " + strAccount));
     BOOST_CHECK(CBitcoinAddress(retValue.get_str()).Get() == demoAddress.Get());
-    printf("Pub Wallet address:%s\n",demoAddress.ToString().c_str());
 
     /*********************************
      * 			getaccount
@@ -160,7 +159,6 @@ BOOST_AUTO_TEST_CASE(rpc_wallet)
      * 	dumpprivkey
      *********************************/
     BOOST_CHECK_NO_THROW(retValue = CallRPC("dumpprivkey " + demoAddress.ToString()));
-    printf("Private Key:%s\n",retValue.get_str().c_str());
     /*********************************
      * 	signmessage + verifymessage
      *********************************/
