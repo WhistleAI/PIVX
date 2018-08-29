@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(masternode_status_test)
     string strWalletFile = "wallet.dat";
     CheckStatus(expected,false,strWalletFile);
     
-    SelectParams(CBaseChainParams::MAINNET);
+    SelectParams(CBaseChainParams::MAIN);
     CheckStatus(expected,false,strWalletFile);
 }
 

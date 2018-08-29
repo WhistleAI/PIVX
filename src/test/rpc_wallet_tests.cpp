@@ -41,7 +41,6 @@ BOOST_AUTO_TEST_CASE(rpc_addmultisig)
     BOOST_CHECK(address.IsValid() && address.IsScript());
     CKeyID keyID;
     address.GetKeyID(keyID);
-    cout << "Script Wallet address: " << address.ToString().c_str() << "\n";
 
     BOOST_CHECK_NO_THROW(v = addmultisig(createArgs(1, address1Hex, address2Hex), false));
     address.SetString(v.get_str());

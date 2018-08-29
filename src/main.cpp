@@ -2184,35 +2184,49 @@ double ConvertBitsToDouble(unsigned int nBits)
 
 int64_t GetBlockValue(int nHeight)
 {
-    int64_t nSubsidy = 0;
 
-    if (Params().NetworkID() == CBaseChainParams::TESTNET) {
-        if (nHeight < 86400 && nHeight > 0)
-            return 250000 * COIN;
+
+
+    if (Params().NetworkID() == CBaseChainParams::TESTNET ) {
+
+        if (nHeight == 0) {
+            return  500000000 * COIN;
+        }
+
     }
 
+    if(Params().NetworkID() == CBaseChainParams::UNITTEST || Params().NetworkID() == CBaseChainParams::REGTEST)
+    {
+        if (nHeight == 0) {
+            return 500000000 * COIN;
+        }
+
+        return 250000 * COIN;
+    }
+
+
     if (nHeight == 0) {
-        nSubsidy = 500000000 * COIN;
+        nSubsidy = 400000 * COIN;
     } else if (nHeight <= 86400 && nHeight > 0) {
-        nSubsidy = 1000 * COIN;
+        nSubsidy = 7233 * COIN;
     }  else if (nHeight <= 172800 && nHeight > 86400) {
-        nSubsidy = 900 * COIN;
+        nSubsidy = 1000 * COIN;
     } else if (nHeight <= 259200 && nHeight > 172800) {
-        nSubsidy = 800 * COIN;
+        nSubsidy = 900 * COIN;
     } else if (nHeight <= 302400 && nHeight > 259200) {
-        nSubsidy = 700 * COIN;
+        nSubsidy = 800 * COIN;
     } else if (nHeight <= 345600 && nHeight > 302400) {
-        nSubsidy = 600 * COIN;
+        nSubsidy = 700 * COIN;
     } else if (nHeight <= 388800 && nHeight > 345600) {
-        nSubsidy = 500 * COIN;
+        nSubsidy = 600 * COIN;
     } else if (nHeight <= 432000 && nHeight > 388800) {
-        nSubsidy = 400 * COIN;
+        nSubsidy = 500 * COIN;
     } else if (nHeight <= 475200 && nHeight > 432000) {
-        nSubsidy = 300 * COIN;
+        nSubsidy = 400 * COIN;
     } else if (nHeight <= 518400 && nHeight > 475200) {
-        nSubsidy = 200 * COIN;
+        nSubsidy = 300 * COIN;
     } else if (nHeight <= 561600 && nHeight > 518400) {
-        nSubsidy = 100 * COIN;
+        nSubsidy = 200 * COIN;
     } else if (nHeight <= 604800 && nHeight > 561600) {
         nSubsidy = 50 * COIN;
     } else if (nHeight <= 5270400 && nHeight >  604800) {
@@ -4429,6 +4443,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
     }
+
     // Version 4 header must be used after Params().Zerocoin_StartHeight(). And never before.
     if (block.GetBlockTime() > Params().Zerocoin_StartTime()) {
         if(block.nVersion < Params().Zerocoin_HeaderVersion()){

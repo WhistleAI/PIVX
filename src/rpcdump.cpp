@@ -108,10 +108,10 @@ Value importprivkey(const Array& params, bool fHelp)
     bool fRescan = true;
     if (params.size() > 2)
         fRescan = params[2].get_bool();
-
+    
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
-
+    
     if (!fGood) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
 
     CKey key = vchSecret.GetKey();

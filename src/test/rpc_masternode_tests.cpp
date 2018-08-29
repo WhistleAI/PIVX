@@ -28,6 +28,10 @@ BOOST_AUTO_TEST_SUITE(rpc_masternode_tests)
     BOOST_AUTO_TEST_CASE(rpc_masternode)
     {
         LOCK(pwalletMain->cs_wallet);
+        SelectParams(CBaseChainParams::REGTEST);
+        string regtestWalletFile = "./test/data/regtestgenwallet.dat";   
+        CWallet wallet(regtestWalletFile);
+        
     } 
 
 

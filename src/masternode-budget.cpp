@@ -848,8 +848,11 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
       //get block value and calculate from that
       if (nHeight == 0){
           nBudget = 0;
-      } else if (nHeight <= 561600) {
-          nBudget = ((nSubsidy /100)*5) * cycleLength; // 5% budget only for merit officers
+      } else if (nHeight <= 86401) {
+          nBudget = ((nSubsidy /100)*80) * cycleLength; // 80% budget only for developers
+        
+      } else if (nHeight <= 172801) {
+          nBudget = ((nSubsidy /100)*10) * cycleLength; // 10% budget only for developers
       } else if (nHeight <= 5270401) {
           nBudget = ((nSubsidy / 100) * 10) * cycleLength; // 5% budget for merit officers 5% for eleted develoeprs
       } else {

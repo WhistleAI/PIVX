@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(sanity)
 {
 
     //Real checkpoints
-    uint256 p0 = uint256("0xc1f57d5c1fbd78c81703184c299d539bf59b0255bf8f167fd471d6c8554fe4e8");
+    uint256 p0 = uint256("0x000009635a82f5f07e7599c3c138f85c557a9ea2a4b188f4a8b2b97150ca75f2");
     // Not real chackpoints
     uint256 p500 = uint256("0x1c9121bf9329a6234bfd1ea2d91515f19cd96990725265253f4b164283ade5dd");
     uint256 p5000 = uint256("0xc7aafa648a0f1450157dc93bd4d7448913a85b7448f803b4ab970d91fc2a7da7");
