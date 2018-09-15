@@ -388,10 +388,10 @@ public:
         pchMessageStart[2] = 0x17;
         pchMessageStart[3] = 0x3C;
         nSubsidyHalvingInterval = 150;
-        nEnforceBlockUpgradeMajority = 750;
-        nRejectBlockOutdatedMajority = 950;
-        nToCheckBlockUpgradeMajority = 1000;
-        nMaturity = 0;
+        //nEnforceBlockUpgradeMajority = 750;
+        //nRejectBlockOutdatedMajority = 950;
+        //nToCheckBlockUpgradeMajority = 1000;
+        nMaturity = 5;
         nMinerThreads = 1;
         nTargetTimespan = 24 * 60 * 60; // whistle: 1 day
         nTargetSpacing = 1 * 60;        // whistle: 1 minutes
@@ -462,7 +462,7 @@ static CRegTestParams regTestParams;
 /**
  * Unit test
  */
-class CUnitTestParams : public CMainParams, public CModifiableParams
+class CUnitTestParams : public CRegTestParams, public CModifiableParams
 {
 public:
     CUnitTestParams()
@@ -474,9 +474,11 @@ public:
         vSeeds.clear();      //! Unit test mode doesn't have any DNS seeds.
         fRequireRPCPassword = false;
         fMiningRequiresPeers = false;
+        fAllowMinDifficultyBlocks = true;
         fDefaultConsistencyChecks = true;
-        fAllowMinDifficultyBlocks = false;
+        fRequireStandard = false;
         fMineBlocksOnDemand = true;
+        fTestnetToBeDeprecatedFieldRPC = false;
         fSkipProofOfWorkCheck = true;
     }
 

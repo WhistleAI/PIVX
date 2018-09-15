@@ -259,16 +259,15 @@ bool IsBlockPayeeValid(const CBlock& block, int nBlockHeight)
 }
 
 
-
-void FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStake)
+bool FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStake)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
-    if (!pindexPrev) return;
+    if (!pindexPrev) return false;
 
     if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS) && budget.IsBudgetPaymentBlock(pindexPrev->nHeight + 1)) {
-        budget.FillBlockPayee(txNew, nFees, fProofOfStake);
+        return budget.FillBlockPayee(txNew, nFees, fProofOfStake);
     } else {
-        masternodePayments.FillBlockPayee(txNew, nFees, fProofOfStake);
+        return masternodePayments.FillBlockPayee(txNew, nFees, fProofOfStake);
     }
 }
 
@@ -281,10 +280,10 @@ std::string GetRequiredPaymentsString(int nBlockHeight)
     }
 }
 
-void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStake)
+bool CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStake)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
-    if (!pindexPrev) return;
+    if (!pindexPrev) return false;
 
     bool hasPayment = true;
     CScript payee;
@@ -332,6 +331,7 @@ void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFe
 
         LogPrint("masternode","Masternode payment of %s to %s\n", FormatMoney(masternodePayment).c_str(), address2.ToString().c_str());
     }
+    return hasPayment;
 }
 
 int CMasternodePayments::GetMinMasternodePaymentsProto()

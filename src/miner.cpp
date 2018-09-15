@@ -110,9 +110,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
     // Make sure to create the correct block version after zerocoin is enabled
     bool fZerocoinActive = GetAdjustedTime() >= Params().Zerocoin_StartTime();
     if (fZerocoinActive)
-        pblock->nVersion = 4;
+        pblock->nVersion = 2;
     else
-        pblock->nVersion = 3;
+        pblock->nVersion = 1;
 
     // Create coinbase tx
     CMutableTransaction txNew;
@@ -347,6 +347,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     continue;
             }
 
+
             CAmount nTxFees = view.GetValueIn(tx) - tx.GetValueOut();
 
             nTxSigOps += GetP2SHSigOpCount(tx, view);
@@ -394,10 +395,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             }
         }
 
+        bool fMasternodePayment = false;
+
         if (!fProofOfStake) {
             //Masternode and general budget payments
-            FillBlockPayee(txNew, nFees, fProofOfStake);
-
+            fMasternodePayment = FillBlockPayee(txNew, nFees, fProofOfStake);
+            LogPrintf("Masternode Filled %d\n", fMasternodePayment);
             //Make payee
             if (txNew.vout.size() > 1) {
                 pblock->payee = txNew.vout[1].scriptPubKey;
@@ -406,11 +409,17 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
         nLastBlockTx = nBlockTx;
         nLastBlockSize = nBlockSize;
-        LogPrintf("CreateNewBlock(): total size %u\n", nBlockSize);
+        LogPrintf("CreateNewBlock(): total size %u proofOfStake:%d nHeight:%i prevHeight:%i\n", nBlockSize,fProofOfStake,nHeight,pindexPrev->nHeight);
 
         // Compute final coinbase transaction.
         pblock->vtx[0].vin[0].scriptSig = CScript() << nHeight << OP_0;
         if (!fProofOfStake) {
+            if ( !fMasternodePayment)
+            {
+                // Compute final coinbase transaction.
+                txNew.vout[0].nValue = GetBlockValue(nHeight) + nFees;
+            }
+            txNew.vin[0].scriptSig = CScript() << nHeight << OP_0;
             pblock->vtx[0] = txNew;
             pblocktemplate->vTxFees[0] = -nFees;
         }
@@ -427,6 +436,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         }
         pblock->nAccumulatorCheckpoint = nCheckpoint;
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
+
 
         CValidationState state;
         if (!TestBlockValidity(state, *pblock, pindexPrev, false, false)) {
@@ -498,8 +508,9 @@ bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 
     // Process this block the same as if we had received it from another node
     CValidationState state;
-    if (!ProcessNewBlock(state, NULL, pblock))
-        return error("PIVXMiner : ProcessNewBlock, block not accepted");
+    if (!ProcessNewBlock(state, NULL, pblock)) {
+        return error("WhistleP2PMiner : ProcessNewBlock, block not accepted");
+    }
 
     for (CNode* node : vNodes) {
         node->PushInventory(CInv(MSG_BLOCK, pblock->GetHash()));

@@ -856,7 +856,9 @@ unsigned int GetLegacySigOpCount(const CTransaction& tx)
 {
     unsigned int nSigOps = 0;
     BOOST_FOREACH (const CTxIn& txin, tx.vin) {
+
         nSigOps += txin.scriptSig.GetSigOpCount(false);
+
     }
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
         nSigOps += txout.scriptPubKey.GetSigOpCount(false);
@@ -1450,36 +1452,44 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
+    {
         return state.DoS(10, error("CheckTransaction() : vin empty"),
             REJECT_INVALID, "bad-txns-vin-empty");
+    }
     if (tx.vout.empty())
+    {
         return state.DoS(10, error("CheckTransaction() : vout empty"),
             REJECT_INVALID, "bad-txns-vout-empty");
-
+    }
     // Size limits
     unsigned int nMaxSize = MAX_ZEROCOIN_TX_SIZE;
 
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > nMaxSize)
+    {
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
-
+    }
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
     int nZCSpendCount = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
-        if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
+        if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake()){
             return state.DoS(100, error("CheckTransaction(): txout empty for user transaction"));
+        }
 
-        if (txout.nValue < 0)
+        if (txout.nValue < 0){
             return state.DoS(100, error("CheckTransaction() : txout.nValue negative"),
                 REJECT_INVALID, "bad-txns-vout-negative");
-        if (txout.nValue > Params().MaxMoneyOut())
+        }
+        if (txout.nValue > Params().MaxMoneyOut()){
             return state.DoS(100, error("CheckTransaction() : txout.nValue too high"),
                 REJECT_INVALID, "bad-txns-vout-toolarge");
+        }
         nValueOut += txout.nValue;
-        if (!MoneyRange(nValueOut))
+        if (!MoneyRange(nValueOut)){
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
+        }
         if (fZerocoinActive && txout.IsZerocoinMint()) {
             if(!CheckZerocoinMint(tx.GetHash(), txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
@@ -1487,6 +1497,7 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
         if (fZerocoinActive && txout.scriptPubKey.IsZerocoinSpend())
             nZCSpendCount++;
     }
+
 
     if (fZerocoinActive) {
         if (nZCSpendCount > Params().Zerocoin_MaxSpendsPerTransaction())
@@ -1511,27 +1522,32 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
     set<COutPoint> vInOutPoints;
     set<CBigNum> vZerocoinSpendSerials;
     for (const CTxIn& txin : tx.vin) {
-        if (vInOutPoints.count(txin.prevout))
+        if (vInOutPoints.count(txin.prevout)){
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
-
+        }
         //duplicate zcspend serials are checked in CheckZerocoinSpend()
         if (!txin.scriptSig.IsZerocoinSpend())
             vInOutPoints.insert(txin.prevout);
     }
 
     if (tx.IsCoinBase()) {
-        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 150)
+
+        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 150){
             return state.DoS(100, error("CheckTransaction() : coinbase script size=%d", tx.vin[0].scriptSig.size()),
                 REJECT_INVALID, "bad-cb-length");
+        }
     } else if (fZerocoinActive && tx.IsZerocoinSpend()) {
         if(tx.vin.size() < 1 || static_cast<int>(tx.vin.size()) > Params().Zerocoin_MaxSpendsPerTransaction())
+        {
             return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than allowed txin's"), REJECT_INVALID, "bad-zerocoinspend");
+        }
     } else {
         BOOST_FOREACH (const CTxIn& txin, tx.vin)
-            if (txin.prevout.IsNull() && (fZerocoinActive && !txin.scriptSig.IsZerocoinSpend()))
+            if (txin.prevout.IsNull() && (fZerocoinActive && !txin.scriptSig.IsZerocoinSpend())){
                 return state.DoS(10, error("CheckTransaction() : prevout is null"),
                     REJECT_INVALID, "bad-txns-prevout-null");
+            }
     }
 
     return true;
@@ -2476,19 +2492,14 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCou
 {
     int64_t ret = 0;
 
-    if (Params().NetworkID() == CBaseChainParams::TESTNET) {
-        if (nHeight < 86401)
-            return 0;
-    }
-
     if(nHeight == 0){
-        return 0;
-    } else if (nHeight < 561601) {
-      ret = blockValue * 0.95; // 95% goes to MN + Stakers
+        ret = 0;
+    } else if (nHeight < 172800) {
+      ret = (blockValue * 20)/100; // 80% goes to MN + Stakers
     } else if(nHeight < 5270401) {
-      ret = blockValue * 0.9; // 90% goes to MN + Stakers
+      ret = (blockValue * 90)/100; // 90% goes to MN + Stakers
     } else {
-       ret = blockValue * 0.8; // 80% goes to MN + Stakers
+       ret = (blockValue * 80)/100; // 80% goes to MN + Stakers
     }
 
 
@@ -3294,6 +3305,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 {
     AssertLockHeld(cs_main);
     // Check it again in case a previous version let a bad block in
+
     if (!fAlreadyChecked && !CheckBlock(block, state, !fJustCheck, !fJustCheck))
         return false;
 
@@ -3367,22 +3379,25 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
         nInputs += tx.vin.size();
         nSigOps += GetLegacySigOpCount(tx);
-        if (nSigOps > nMaxBlockSigOps)
-            return state.DoS(100, error("ConnectBlock() : too many sigops"),
-                REJECT_INVALID, "bad-blk-sigops");
-
+        if (nSigOps > nMaxBlockSigOps){
+            LogPrintf("ConnectBlock() : too many sigops");
+            return state.DoS(100, error("ConnectBlock() : too many sigops"), REJECT_INVALID, "bad-blk-sigops");
+        }
         //Temporarily disable zerocoin transactions for maintenance
-        if (block.nTime > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE) && !IsInitialBlockDownload() && tx.ContainsZerocoins())
+        if (block.nTime > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE) && !IsInitialBlockDownload() && tx.ContainsZerocoins()) {
+            LogPrintf("ConnectBlock() : zerocoin transactions are currently in maintenance mode");
             return state.DoS(100, error("ConnectBlock() : zerocoin transactions are currently in maintenance mode"));
-
+        }
         if (tx.IsZerocoinSpend()) {
             int nHeightTx = 0;
             if (IsTransactionInChain(tx.GetHash(), nHeightTx)) {
                 //when verifying blocks on init, the blocks are scanned without being disconnected - prevent that from causing an error
-                if (!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTx))
+                if (!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTx)){
+                    LogPrintf("txid %s already exists in block %d , trying to include it again in block %d", tx.GetHash().GetHex().c_str(), nHeightTx, pindex->nHeight);
                     return state.DoS(100, error("%s : txid %s already exists in block %d , trying to include it again in block %d", __func__,
                                                 tx.GetHash().GetHex(), nHeightTx, pindex->nHeight),
                                      REJECT_INVALID, "bad-txns-inputs-missingorspent");
+                }
             }
 
             //Check for double spending of serial #'s
@@ -3418,13 +3433,15 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     return error("%s : failed to record coin serial to database");
             }
         } else if (!tx.IsCoinBase()) {
-            if (!view.HaveInputs(tx))
+            if (!view.HaveInputs(tx)){
+                LogPrintf("ConnectBlock() : inputs missing/spent");
                 return state.DoS(100, error("ConnectBlock() : inputs missing/spent"),
                     REJECT_INVALID, "bad-txns-inputs-missingorspent");
-
+            }
             // Check that the inputs are not marked as invalid/fraudulent
             for (CTxIn in : tx.vin) {
                 if (!ValidOutPoint(in.prevout, pindex->nHeight)) {
+                    LogPrintf("bad-txns-invalid-inputs");
                     return state.DoS(100, error("%s : tried to spend invalid input %s in tx %s", __func__, in.prevout.ToString(),
                                   tx.GetHash().GetHex()), REJECT_INVALID, "bad-txns-invalid-inputs");
                 }
@@ -3513,7 +3530,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
 //    LogPrintf("XX69----------> ConnectBlock(): nValueOut: %s, nValueIn: %s, nFees: %s, nMint: %s zWislSpent: %s\n",
 //              FormatMoney(nValueOut), FormatMoney(nValueIn),
-//              FormatMoney(nFees), FormatMoney(pindex->nMint), FormatMoney(nAmountZerocoinSpent));
+//             FormatMoney(nFees), FormatMoney(pindex->nMint), FormatMoney(nAmountZerocoinSpent));
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
@@ -3565,6 +3582,15 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 return state.DoS(100, error("ConnectBlock() : failed to calculate accumulator checkpoint"));
             }
         }
+
+        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
+            LogPrintf("%s: block=%d calculated: %s\n block: %s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
+            return state.DoS(100, error("ConnectBlock() : accumulator does not match calculated value"));
+        }
+    } else if (!fVerifyingBlocks) {
+        if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint)
+            return state.DoS(100, error("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
+    }
 
         if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
             LogPrintf("%s: block=%d calculated: %s\n block: %s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
@@ -4444,15 +4470,15 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
             REJECT_INVALID, "high-hash");
     }
 
-    // Version 4 header must be used after Params().Zerocoin_StartHeight(). And never before.
+    // Version header must be used after Params().Zerocoin_StartHeight(). And never before.
     if (block.GetBlockTime() > Params().Zerocoin_StartTime()) {
         if(block.nVersion < Params().Zerocoin_HeaderVersion()){
-            return state.DoS(50, error("CheckBlockHeader() : block version must be above 4 after ZerocoinStartHeight"),
+            return state.DoS(50, error("CheckBlockHeader() : block version must be above after ZerocoinStartHeight"),
             REJECT_INVALID, "block-version");
         }
     } else {
         if (block.nVersion >= Params().Zerocoin_HeaderVersion()){
-            return state.DoS(50, error("CheckBlockHeader() : block version must be below 4 before ZerocoinStartHeight"),
+            return state.DoS(50, error("CheckBlockHeader() : block version must be below before ZerocoinStartHeight"),
             REJECT_INVALID, "block-version");
         }
     }
@@ -4469,30 +4495,35 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
 
 
-    if (!CheckBlockHeader(block, state, block.IsProofOfWork()))
+    if (!CheckBlockHeader(block, state, block.IsProofOfWork())){
         return state.DoS(100, error("CheckBlock() : CheckBlockHeader failed"),
             REJECT_INVALID, "bad-header", true);
-
+    }
     // Check timestamp
     LogPrint("debug", "%s: block=%s  is proof of stake=%d\n", __func__, block.GetHash().ToString().c_str(), block.IsProofOfStake());
     if (block.GetBlockTime() > GetAdjustedTime() + (block.IsProofOfStake() ? 180 : 7200)) // 3 minute future drift for PoS
+    {
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"),
             REJECT_INVALID, "time-too-new");
+    }
 
     // Check the merkle root.
     if (fCheckMerkleRoot) {
         bool mutated;
         uint256 hashMerkleRoot2 = block.BuildMerkleTree(&mutated);
         if (block.hashMerkleRoot != hashMerkleRoot2)
+        {
             return state.DoS(100, error("CheckBlock() : hashMerkleRoot mismatch"),
                 REJECT_INVALID, "bad-txnmrklroot", true);
-
+        }
         // Check for merkle tree malleability (CVE-2012-2459): repeating sequences
         // of transactions in a block without affecting the merkle root of a block,
         // while still invalidating it.
         if (mutated)
+        {
             return state.DoS(100, error("CheckBlock() : duplicate transaction"),
                 REJECT_INVALID, "bad-txns-duplicate", true);
+        }
     }
 
     // All potential-corruption validation must be done before we do any
@@ -4502,23 +4533,30 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     // Size limits
     unsigned int nMaxBlockSize = MAX_BLOCK_SIZE_CURRENT;
     if (block.vtx.empty() || block.vtx.size() > nMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nMaxBlockSize)
+    {
         return state.DoS(100, error("CheckBlock() : size limits failed"),
             REJECT_INVALID, "bad-blk-length");
-
+    }
     // First transaction must be coinbase, the rest must not be
     if (block.vtx.empty() || !block.vtx[0].IsCoinBase())
+    {
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"),
             REJECT_INVALID, "bad-cb-missing");
+    }
     for (unsigned int i = 1; i < block.vtx.size(); i++)
+    {
+
         if (block.vtx[i].IsCoinBase())
+        {
             return state.DoS(100, error("CheckBlock() : more than one coinbase"),
                 REJECT_INVALID, "bad-cb-multiple");
-
+        }
+    }
     if (block.IsProofOfStake()) {
         // Coinbase output should be empty if proof-of-stake block
-        if (block.vtx[0].vout.size() != 1 || !block.vtx[0].vout[0].IsEmpty())
+        if (block.vtx[0].vout.size() != 1 || !block.vtx[0].vout[0].IsEmpty()){
             return state.DoS(100, error("CheckBlock() : coinbase output not empty for proof-of-stake block"));
-
+        }
         // Second transaction must be coinstake, the rest must not be
         if (block.vtx.empty() || !block.vtx[1].IsCoinStake())
             return state.DoS(100, error("CheckBlock() : second tx is not coinstake"));
@@ -4582,21 +4620,18 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     bool fZerocoinActive = block.GetBlockTime() > Params().Zerocoin_StartTime();
     vector<CBigNum> vBlockSerials;
     for (const CTransaction& tx : block.vtx) {
-        if (!CheckTransaction(tx, fZerocoinActive, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state))
+        if (!CheckTransaction(tx, fZerocoinActive, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state)){
             return error("CheckBlock() : CheckTransaction failed");
-
-
+        }
         // double check that there are no double spent zWISL spends in this block
 
         if (tx.IsZerocoinSpend()) {
             for (const CTxIn txIn : tx.vin) {
                 if (txIn.scriptSig.IsZerocoinSpend()) {
                     libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
-                    if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
-
-                        return state.DoS(100, error("%s : Double spending of zWISL serial %s in block\n Block: %s",
-
-                                                    __func__, spend.getCoinSerialNumber().GetHex(), block.ToString()));
+                    if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber())){
+                        return state.DoS(100, error("%s : Double spending of zWISL serial %s in block\n Block: %s",__func__, spend.getCoinSerialNumber().GetHex(), block.ToString()));
+                    }
                     vBlockSerials.emplace_back(spend.getCoinSerialNumber());
                 }
             }
@@ -4610,9 +4645,10 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     }
     unsigned int nMaxBlockSigOps = fZerocoinActive ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
     if (nSigOps > nMaxBlockSigOps)
+    {
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"),
             REJECT_INVALID, "bad-blk-sigops", true);
-
+    }
     return true;
 }
 
@@ -4945,7 +4981,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     // Preliminary checks
     int64_t nStartTime = GetTimeMillis();
     bool checked = CheckBlock(*pblock, state);
-
+    printf("Checked Block\n");
     int nMints = 0;
     int nSpends = 0;
     for (const CTransaction tx : pblock->vtx) {
@@ -4963,15 +4999,15 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     if (nMints || nSpends)
         LogPrintf("%s : block contains %d zWISL mints and %d zWISL spends\n", __func__, nMints, nSpends);
 
-
-    // NovaCoin: check proof-of-stake block signature
-    if (!pblock->CheckBlockSignature())
+    if (!CheckBlockSignature(*pblock)){
+        printf("ProcessNewBlock() : bad proof-of-stake block signature\n");
         return error("ProcessNewBlock() : bad proof-of-stake block signature");
-
+    }
     if (pblock->GetHash() != Params().HashGenesisBlock() && pfrom != NULL) {
         //if we get this far, check if the prev block is our prev block, if not then request sync and return false
         BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
         if (mi == mapBlockIndex.end()) {
+            printf("prev block is not our prevblock, we have a fork a new sync is needed\n");
             pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
             return false;
         }
@@ -4982,6 +5018,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
 
         MarkBlockAsReceived (pblock->GetHash ());
         if (!checked) {
+            printf("%s : CheckBlock FAILED for block %s\n", __func__, pblock->GetHash().GetHex().c_str());
             return error ("%s : CheckBlock FAILED for block %s", __func__, pblock->GetHash().GetHex());
         }
 
@@ -4992,13 +5029,17 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
             mapBlockSource[pindex->GetBlockHash ()] = pfrom->GetId ();
         }
         CheckBlockIndex ();
-        if (!ret)
+        if (!ret){
+            printf("%s : AcceptBlock FAILED\n", __func__);
             return error ("%s : AcceptBlock FAILED", __func__);
+        }
     }
 
     if (!ActivateBestChain(state, pblock, checked))
+    {
+        printf("%s : ActivateBestChain failed\n", __func__);
         return error("%s : ActivateBestChain failed", __func__);
-
+    }
     if (!fLiteMode) {
         if (masternodeSync.RequestedMasternodeAssets > MASTERNODE_SYNC_LIST) {
             obfuScationPool.NewBlock();
@@ -5042,6 +5083,7 @@ bool TestBlockValidity(CValidationState& state, const CBlock& block, CBlockIndex
         return false;
     if (!ConnectBlock(block, state, &indexDummy, viewNew, true))
         return false;
+    LogPrintf("ConnectBlock Passed\n");
     assert(state.IsValid());
 
     return true;
