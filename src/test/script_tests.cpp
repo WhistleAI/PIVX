@@ -61,7 +61,6 @@ read_json(const std::string& jsondata)
 }
 
 BOOST_AUTO_TEST_SUITE(script_tests)
-
 CMutableTransaction BuildCreditingTransaction(const CScript& scriptPubKey)
 {
     CMutableTransaction txCredit;

@@ -309,7 +309,7 @@
          <item>
           <widget class="QPushButton" name="decryptKeyButton_DEC">
            <property name="toolTip">
-            <string>Verify the message to ensure it was signed with the specified PIVX address</string>
+            <string>Verify the message to ensure it was signed with the specified WISL address</string>
            </property>
            <property name="text">
             <string>Decrypt &amp;Key</string>

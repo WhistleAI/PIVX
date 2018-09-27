@@ -101,7 +101,6 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
     }
     for (int nHeight = 5170400; nHeight < 5270401; nHeight += 1) {
         CAmount nSubsidy = GetBlockValue(nHeight);
-
         BOOST_CHECK(nSubsidy == (30 * COIN));
         BOOST_CHECK(MoneyRange(nSubsidy));
         nSum += nSubsidy;

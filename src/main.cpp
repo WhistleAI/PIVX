@@ -2211,7 +2211,7 @@ int64_t GetBlockValue(int nHeight)
 
     }
 
-    if(Params().NetworkID() == CBaseChainParams::UNITTEST || Params().NetworkID() == CBaseChainParams::REGTEST)
+    if( Params().NetworkID() == CBaseChainParams::REGTEST)
     {
         if (nHeight == 0) {
             return 500000000 * COIN;
@@ -2220,6 +2220,8 @@ int64_t GetBlockValue(int nHeight)
         return 250000 * COIN;
     }
 
+    
+    int64_t nSubsidy = 0;
 
     if (nHeight == 0) {
         nSubsidy = 400000 * COIN;
@@ -3592,14 +3594,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             return state.DoS(100, error("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
     }
 
-        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
-            LogPrintf("%s: block=%d calculated: %s\n block: %s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
-            return state.DoS(100, error("ConnectBlock() : accumulator does not match calculated value"));
-        }
-    } else if (!fVerifyingBlocks) {
-        if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint)
-            return state.DoS(100, error("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
-    }
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -4999,10 +4993,11 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     if (nMints || nSpends)
         LogPrintf("%s : block contains %d zWISL mints and %d zWISL spends\n", __func__, nMints, nSpends);
 
-    if (!CheckBlockSignature(*pblock)){
+    if (!pblock->CheckBlockSignature()){
         printf("ProcessNewBlock() : bad proof-of-stake block signature\n");
         return error("ProcessNewBlock() : bad proof-of-stake block signature");
     }
+    
     if (pblock->GetHash() != Params().HashGenesisBlock() && pfrom != NULL) {
         //if we get this far, check if the prev block is our prev block, if not then request sync and return false
         BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);

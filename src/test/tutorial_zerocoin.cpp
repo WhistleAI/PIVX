@@ -10,7 +10,6 @@
 * @license    This project is released under the MIT license.
 **/
 
-
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include <iostream>

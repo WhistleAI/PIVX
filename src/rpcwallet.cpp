@@ -489,7 +489,7 @@ Value signmessage(const Array& params, bool fHelp)
             HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") +
             "\nCreate the signature\n" + HelpExampleCli("signmessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\" \"my message\"") +
             "\nVerify the signature\n" + HelpExampleCli("verifymessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\" \"signature\" \"my message\"") +
-            "\nAs json rpc\n" + HelpExampleRpc("signmessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\", \"my message\""));
+            "\nAs json rpc\n" + HelpExampleRpc("signmessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\", \"my message\"");
 
     EnsureWalletIsUnlocked();
 
@@ -912,7 +912,7 @@ Value sendmany(const Array& params, bool fHelp)
     BOOST_FOREACH (const Pair& s, sendTo) {
         CBitcoinAddress address(s.name_);
         if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid WISL address: ")+name_);
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid WISL address: ")+s.name_);
 
 
         if (setAddress.count(address))
@@ -2531,11 +2531,10 @@ Value spendzerocoin(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 5 || params.size() < 4)
         throw runtime_error(
-<<<<<<< HEAD
-            "spendzerocoin amount mintchange minimizechange securitylevel ( \"address\" )\n"
-            "\nSpend zWISL to a WISL address.\n" +
+            "spendzerocoin <amount> <mintchange [true|false]> <minimizechange [true|false]>  <securitylevel [1-100]> <address>\n"
+            "Overview: Convert zPIV (zerocoins) into PIV. \n"
             "amount: amount to spend\n"
-            "mintchange: if there is left over WISL (change), the wallet can convert it automatically back to zerocoins [true]\n"
+            "mintchange: if there is left over PIV (change), the wallet can convert it automatically back to zerocoins [true]\n"
             "minimizechange: try to minimize the returning change  [false]\n"
             "security level: the amount of checkpoints to add to the accumulator. A checkpoint contains 10 blocks worth of zerocoinmints."
                     "The more checkpoints that are added, the more untraceable the transaction will be. Use [100] to add the maximum amount"
@@ -2745,30 +2744,27 @@ Value exportzerocoins(const Array& params, bool fHelp)
     if(fHelp || params.empty() || params.size() > 2)
         throw runtime_error(
             "exportzerocoins include_spent ( denomination )\n"
+                "Exports zerocoin mints that are held by this wallet.dat\n"
 
-            "\nExports zerocoin mints that are held by this wallet.dat\n" +
+                "\nArguments:\n"
+                "1. \"include_spent\"        (bool, required) Include mints that have already been spent\n"
+                "2. \"denomination\"         (integer, optional) Export a specific denomination of zPiv\n"
 
-            "\nArguments:\n"
-            "1. \"include_spent\"        (bool, required) Include mints that have already been spent\n"
-            "2. \"denomination\"         (integer, optional) Export a specific denomination of zWISL\n"
+                "\nResult\n"
+                "[                   (array of json object)\n"
+                "  {\n"
+                "    \"d\" : n,        (numeric) the mint's zerocoin denomination \n"
+                "    \"p\" : \"pubcoin\", (string) The public coin\n"
+                "    \"s\" : \"serial\",  (string) The secret serial number\n"
+                "    \"r\" : \"random\",  (string) The secret random number\n"
+                "    \"t\" : \"txid\",    (string) The txid that the coin was minted in\n"
+                "    \"h\" : n,         (numeric) The height the tx was added to the blockchain\n"
+                "    \"u\" : used       (boolean) Whether the mint has been spent\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
 
-            "\nResult:\n"
-            "[                   (array of json object)\n"
-            "  {\n"
-            "    \"d\": n,         (numeric) the mint's zerocoin denomination \n"
-            "    \"p\": \"pubcoin\", (string) The public coin\n"
-            "    \"s\": \"serial\",  (string) The secret serial number\n"
-            "    \"r\": \"random\",  (string) The secret random number\n"
-            "    \"t\": \"txid\",    (string) The txid that the coin was minted in\n"
-            "    \"h\": n,         (numeric) The height the tx was added to the blockchain\n"
-            "    \"u\": used,      (boolean) Whether the mint has been spent\n"
-            "    \"v\": version,   (numeric) The version of the zWISL\n"
-            "    \"k\": \"privkey\"  (string) The zWISL private key (V2+ zWISL only)\n"
-            "  }\n"
-            "  ,...\n"
-            "]\n"
-
-            "\nExamples:\n" +
+                "\nExamples\n" +
             HelpExampleCli("exportzerocoins", "false 5") + HelpExampleRpc("exportzerocoins", "false 5"));
 
     if (pwalletMain->IsLocked())
@@ -2869,26 +2865,25 @@ Value importzerocoins(const Array& params, bool fHelp)
 
 Value reconsiderzerocoins(const Array& params, bool fHelp)
 {
-    if(fHelp || !params.empty())
+    if(fHelp || !params.empty()){
         throw runtime_error(
             "reconsiderzerocoins\n"
+                "\nCheck archived zPiv list to see if any mints were added to the blockchain.\n"
 
-            "\nCheck archived zWISL list to see if any mints were added to the blockchain.\n" +
+                "\nResult\n"
+                "[                                 (array of json objects)\n"
+                "  {\n"
+                "    \"txid\" : txid,              (numeric) the mint's zerocoin denomination \n"
+                "    \"denomination\" : \"denom\", (numeric) the mint's zerocoin denomination\n"
+                "    \"pubcoin\" : \"pubcoin\",    (string) The mint's public identifier\n"
+                "    \"height\" : n,               (numeric) The height the tx was added to the blockchain\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
 
-            "\nResult:\n"
-            "[\n"
-            "  {\n"
-            "    \"txid\" : \"xxx\",           (string) the mint's zerocoin denomination \n"
-            "    \"denomination\" : amount,  (numeric) the mint's zerocoin denomination\n"
-            "    \"pubcoin\" : \"xxx\",        (string) The mint's public identifier\n"
-            "    \"height\" : n              (numeric) The height the tx was added to the blockchain\n"
-            "  }\n"
-            "  ,...\n"
-            "]\n"
-
-            "\nExamples\n" +
+                "\nExamples\n" +
             HelpExampleCli("reconsiderzerocoins", "") + HelpExampleRpc("reconsiderzerocoins", ""));
-
+    }
     if(pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED,
                            "Error: Please enter the wallet passphrase with walletpassphrase first.");

@@ -1,7 +1,6 @@
 // Copyright (c) 2013 The Bitcoin Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
 #include "data/sighash.json.h"
 #include "main.h"
 #include "random.h"
@@ -113,7 +112,6 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle) {
         RandomScript(txout.scriptPubKey);
     }
 }
-
 BOOST_AUTO_TEST_SUITE(sighash_tests)
 
 BOOST_AUTO_TEST_CASE(sighash_test)

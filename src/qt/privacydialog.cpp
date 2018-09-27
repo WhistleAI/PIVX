@@ -57,29 +57,16 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
 
     // Denomination labels
-    ui->labelzDenom1Text->setText(tr("Denom. with value <b>1</b>:"));
-    ui->labelzDenom2Text->setText(tr("Denom. with value <b>5</b>:"));
-    ui->labelzDenom3Text->setText(tr("Denom. with value <b>10</b>:"));
-    ui->labelzDenom4Text->setText(tr("Denom. with value <b>50</b>:"));
-    ui->labelzDenom5Text->setText(tr("Denom. with value <b>100</b>:"));
-    ui->labelzDenom6Text->setText(tr("Denom. with value <b>500</b>:"));
-    ui->labelzDenom7Text->setText(tr("Denom. with value <b>1000</b>:"));
-    ui->labelzDenom8Text->setText(tr("Denom. with value <b>5000</b>:"));
+    ui->labelzDenom1Text->setText("Denom. with value <b>1</b>:");
+    ui->labelzDenom2Text->setText("Denom. with value <b>5</b>:");
+    ui->labelzDenom3Text->setText("Denom. with value <b>10</b>:");
+    ui->labelzDenom4Text->setText("Denom. with value <b>50</b>:");
+    ui->labelzDenom5Text->setText("Denom. with value <b>100</b>:");
+    ui->labelzDenom6Text->setText("Denom. with value <b>500</b>:");
+    ui->labelzDenom7Text->setText("Denom. with value <b>1000</b>:");
+    ui->labelzDenom8Text->setText("Denom. with value <b>5000</b>:");
 
-    // AutoMint status
-    ui->label_AutoMintStatus->setText(tr("AutoMint Status:"));
-
-    // Global Supply labels
-    ui->labelZsupplyText1->setText(tr("Denom. <b>1</b>:"));
-    ui->labelZsupplyText5->setText(tr("Denom. <b>5</b>:"));
-    ui->labelZsupplyText10->setText(tr("Denom. <b>10</b>:"));
-    ui->labelZsupplyText50->setText(tr("Denom. <b>50</b>:"));
-    ui->labelZsupplyText100->setText(tr("Denom. <b>100</b>:"));
-    ui->labelZsupplyText500->setText(tr("Denom. <b>500</b>:"));
-    ui->labelZsupplyText1000->setText(tr("Denom. <b>1000</b>:"));
-    ui->labelZsupplyText5000->setText(tr("Denom. <b>5000</b>:"));
-
-    // whistle settings
+    // Whistle AI settings
     QSettings settings;
     if (!settings.contains("nSecurityLevel")){
         nSecurityLevel = 42;
@@ -107,11 +94,11 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
 
     //temporary disable for maintenance
     if(GetAdjustedTime() > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE)) {
-        ui->pushButtonMintzPIV->setEnabled(false);
-        ui->pushButtonMintzPIV->setToolTip(tr("zPIV is currently disabled due to maintenance."));
+        ui->pushButtonMintzWISL->setEnabled(false);
+        ui->pushButtonMintzWISL->setToolTip(tr("zWISL is currently disabled due to maintenance."));
 
-        ui->pushButtonSpendzPIV->setEnabled(false);
-        ui->pushButtonSpendzPIV->setToolTip(tr("zPIV is currently disabled due to maintenance."));
+        ui->pushButtonSpendzWISL->setEnabled(false);
+        ui->pushButtonSpendzWISL->setToolTip(tr("zWISL is currently disabled due to maintenance."));
     }
 }
 
@@ -207,8 +194,7 @@ void PrivacyDialog::on_pushButtonMintzWISL_clicked()
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
 
     // Minting successfully finished. Show some stats for entertainment.
-
-    QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zWISL in ") +
+    QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zWISL in ") + 
                              QString::number(fDuration) + tr(" sec. Used denominations:\n");
     
     // Clear amount to avoid double spending when accidentally clicking twice
@@ -297,7 +283,6 @@ void PrivacyDialog::on_pushButtonSpendzWISL_clicked()
 
 void PrivacyDialog::on_pushButtonZWislControl_clicked()
 {
-
     ZWislControlDialog* zWislControl = new ZWislControlDialog(this);
     zWislControl->setModel(walletModel);
     zWislControl->exec();
@@ -325,7 +310,7 @@ void PrivacyDialog::sendzWISL()
     }
     else{
         if (!address.IsValid()) {
-            QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid WISL Address"), QMessageBox::Ok, QMessageBox::Ok);
+            QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Wislx Address"), QMessageBox::Ok, QMessageBox::Ok);
             ui->payTo->setFocus();
             return;
         }
@@ -411,10 +396,10 @@ void PrivacyDialog::sendzWISL()
     ui->TEMintStatus->setPlainText(tr("Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint();
 
-    // use mints from zPiv selector if applicable
+    // use mints from zWisl selector if applicable
     vector<CZerocoinMint> vMintsSelected;
-    if (!ZPivControlDialog::listSelectedMints.empty()) {
-        vMintsSelected = ZPivControlDialog::GetSelectedMints();
+    if (!ZWislControlDialog::listSelectedMints.empty()) {
+        vMintsSelected = ZWislControlDialog::GetSelectedMints();
     }
 
     // Spend zWISL
@@ -450,14 +435,14 @@ void PrivacyDialog::sendzWISL()
     }
 
     // Clear zwisl selector in case it was used
-    ZWislControlDialog::setSelectedMints.clear();
+    ZWislControlDialog::listSelectedMints.clear();
 
     // Some statistics for entertainment
     QString strStats = "";
     CAmount nValueIn = 0;
     int nCount = 0;
     for (CZerocoinSpend spend : receipt.GetSpends()) {
-        strStats += tr("zWISL Spend #: ") + QString::number(nCount) + ", ";
+        strStats += tr("zWisl Spend #: ") + QString::number(nCount) + ", ";
         strStats += tr("denomination: ") + QString::number(spend.GetDenomination()) + ", ";
         strStats += tr("serial: ") + spend.GetSerial().ToString().c_str() + "\n";
         strStats += tr("Spend is 1 of : ") + QString::number(spend.GetMintCount()) + " mints in the accumulator\n";
@@ -472,7 +457,7 @@ void PrivacyDialog::sendzWISL()
         strStats += tr("address: ");
         CTxDestination dest;
         if(txout.scriptPubKey.IsZerocoinMint())
-            strStats += tr("zWISL Mint");
+            strStats += tr("zWisl Mint");
         else if(ExtractDestination(txout.scriptPubKey, dest))
             strStats += tr(CBitcoinAddress(dest).ToString().c_str());
         strStats += "\n";
@@ -628,7 +613,7 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
         }
 
         strDenomStats = strUnconfirmed + QString::number(mapDenomBalances.at(denom)) + " x " +
-                        QString::number(nCoins) + " = <b>" +
+                        QString::number(nCoins) + " = <b>" + 
                         QString::number(nSumPerCoin) + " zWISL </b>";
 
         switch (nCoins) {
@@ -667,11 +652,9 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
         nLockedBalance = walletModel->getLockedBalance();
     }
 
-
     ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zWISL "));
     ui->labelzAvailableAmount_2->setText(QString::number(matureZerocoinBalance/COIN) + QString(" zWISL "));
     ui->labelzWISLAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance - nLockedBalance, false, BitcoinUnits::separatorAlways));
-
 }
 
 void PrivacyDialog::updateDisplayUnit()

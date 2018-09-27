@@ -413,19 +413,26 @@ whistled_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-
-whistled_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
-
-# whistle-cli binary #
-whistle_cli_SOURCES = whistle-cli.cpp
-whistle_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-whistle_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-whistle_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-
-if TARGET_WINDOWS
-whistle_cli_SOURCES += whistle-cli-res.rc
+if ENABLE_ZMQ
+whistled_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 
+if ENABLE_WALLET
+whistled_LDADD += libbitcoin_wallet.a
+endif
+whistled_SOURCES = whistled.cpp
+#
+
+if TARGET_WINDOWS
+whistled_SOURCES += whistled-res.rc
+endif
+
+whistled_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+whistled_CPPFLAGS = $(BITCOIN_INCLUDES)
+whistled_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+
+
+# whistle-cli binary #
 whistle_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBBITCOIN_UTIL) \
@@ -450,7 +457,6 @@ whistle_tx_LDADD = \
   $(LIBSECP256K1) \
   $(BOOST_LIBS) \
   $(CRYPTO_LIBS)
-
 
 whistle_tx_SOURCES = whistle-tx.cpp
 whistle_tx_CPPFLAGS = $(BITCOIN_INCLUDES)

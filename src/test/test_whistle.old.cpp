@@ -1,4 +1,3 @@
-
 // Copyright (c) 2011-2013 The Bitcoin Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -14,8 +13,6 @@
 #include "db.h"
 #include "wallet.h"
 #endif
-#include "miner.h"
-#include "chainparams.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -23,12 +20,9 @@
 
 CClientUIInterface uiInterface;
 CWallet* pwalletMain;
-bool fSetRegTestWallet;
 
 extern bool fPrintToConsole;
 extern void noui_connect();
-
-
 
 struct TestingSetup {
     CCoinsViewDB *pcoinsdbview;
@@ -39,12 +33,12 @@ struct TestingSetup {
         SetupEnvironment();
         fPrintToDebugLog = false; // don't want to write to debug.log file
         fCheckBlockIndex = true;
-        SelectParams(CBaseChainParams::UNITTEST);
+        SelectParams(CBaseChainParams::REGTEST);
         noui_connect();
 #ifdef ENABLE_WALLET
         bitdb.MakeMock();
 #endif
-        pathTemp = GetTempPath() / strprintf("test_pivx_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
+        pathTemp = GetTempPath() / strprintf("test_whistle_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
         boost::filesystem::create_directories(pathTemp);
         mapArgs["-datadir"] = pathTemp.string();
         pblocktree = new CBlockTreeDB(1 << 20, true);
@@ -82,11 +76,6 @@ struct TestingSetup {
 };
 
 BOOST_GLOBAL_FIXTURE(TestingSetup);
-
-
-
-
-
 
 void Shutdown(void* parg)
 {

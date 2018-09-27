@@ -2,7 +2,11 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "test/test_whistle.h"
+#include "main.h"
+#include "random.h"
+#include "txdb.h"
+#include "ui_interface.h"
+#include "util.h"
 
 #include "wallet.h"
 #include "walletdb.h"
@@ -10,14 +14,42 @@
 #include "masternode.h"
 #include "miner.h"
 
+
+#include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/thread.hpp>
 
 
-
-extern CWallet* pwalletReg;
+extern bool fPrintToConsole;
+extern void noui_connect();
 extern CWallet* pwalletMain;
 
-BOOST_FIXTURE_TEST_SUITE(masternode_tests,RegTestSetup)
+
+struct RegTestSetup{
+    CCoinsViewDB *pcoinsdbview;
+    boost::filesystem::path pathTemp;
+    boost::thread_group threadGroup;
+    
+   
+    RegTestSetup(){
+
+            SelectParams(CBaseChainParams::REGTEST);
+
+
+
+    }
+
+
+
+
+    ~RegTestSetup()
+    {
+
+    }
+
+};
+
+BOOST_FIXTURE_TEST_SUITE(masternode_tests, RegTestSetup)
 
 void CheckStatus(std::string stExpected , bool unitTest, string walletFile)
 {
@@ -32,7 +64,7 @@ void CheckStatus(std::string stExpected , bool unitTest, string walletFile)
 
 CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const CScript& scriptPubKey)
 {
-    CBlockTemplate *pblocktemplate = CreateNewBlock(scriptPubKey,pwalletReg,false);
+    CBlockTemplate *pblocktemplate = CreateNewBlock(scriptPubKey,pwalletMain,false);
     CBlock& block = pblocktemplate->block;
    
     // Replace mempool-selected txns with just coinbase plus passed-in txns:
@@ -71,9 +103,9 @@ void ProcessBlocksTillMaturityTransactions(CKey& coinbaseKey,std::vector<CTransa
 
 BOOST_AUTO_TEST_CASE(masternode_test)
 {       
-    CKey coinbaseKey;// private/public key needed to spend coinbase transactions
-     std::vector<CTransaction> coinbaseTxns; // For convenience, coinbase transactions
-     ProcessBlocksTillMaturityTransactions(coinbaseKey,coinbaseTxns);
+     //CKey coinbaseKey;// private/public key needed to spend coinbase transactions
+     //std::vector<CTransaction> coinbaseTxns; // For convenience, coinbase transactions
+     //ProcessBlocksTillMaturityTransactions(coinbaseKey,coinbaseTxns);
     //BOOST_CHECK(pblocktemplate = CreateNewBlock(scriptPubKey, pwalletMain, false));
     
     /*

@@ -10,12 +10,11 @@
 
 using namespace std;
 
-
-std::set<std::string> ZWislControlDialog::setSelectedMints;
-std::set<CMintMeta> ZWislControlDialog::setMints;
+std::list<std::string> ZWislControlDialog::listSelectedMints;
+std::list<CZerocoinMint> ZWislControlDialog::listMints;
 
 ZWislControlDialog::ZWislControlDialog(QWidget *parent) :
-    QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint),
+    QDialog(parent),
     ui(new Ui::ZWislControlDialog),
 
     model(0)

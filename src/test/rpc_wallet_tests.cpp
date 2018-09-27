@@ -20,7 +20,6 @@ extern Value CallRPC(string args);
 
 extern CWallet* pwalletMain;
 
-
 BOOST_AUTO_TEST_SUITE(rpc_wallet_tests)
 
 BOOST_AUTO_TEST_CASE(rpc_addmultisig)

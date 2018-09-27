@@ -171,10 +171,6 @@ public:
         nBlockFirstFraudulent = 90002; //First block that bad serials emerged
         nBlockLastGoodCheckpoint = 90005; //Last valid accumulator checkpoint
         nBlockEnforceInvalidUTXO = 902850; //Start enforcing the invalid UTXO's
-        nInvalidAmountFiltered = 268200*COIN; //Amount of invalid coins filtered through exchanges, that should be considered valid
-        nBlockZerocoinV2 = 1; //!> The block that zerocoin v2 becomes active - roughly Tuesday, May 8, 2018 4:00:00 AM GMT
-        nEnforceNewSporkKey = 1525158000; //!> Sporks signed after (GMT): Tuesday, May 1, 2018 7:00:00 AM GMT must use the new spork key
-        nRejectOldSporkKey = 1527811200; //!> Fully reject old spork key after (GMT): Friday, June 1, 2018 12:00:00 AM
         fNewGenesisBlock = false;
         /**
          * Build the genesis block
@@ -237,7 +233,6 @@ public:
 
         nPoolMaxTransactions = 3;
         strSporkKey = "0499A7AF4806FC6DE640D23BC5936C29B77ADF2174B4F45492727F897AE63CF8D27B2F05040606E0D14B547916379FA10716E344E745F880EDC037307186AA25B7";
-        strSporkKeyOld = "04B433E6598390C992F4F022F20D3B4CBBE691652EE7C48243B81701CBDB7CC7D7BF0EE09E154E6FCBF2043D65AF4E9E97B89B5DBAF830D83B9B7F469A6C45A717";
         strObfuscationPoolDummyAddress = "WXLP3awRL7uM6XwtTFmGtcmGGuraPvkWCb";
         nStartMasternodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
 
@@ -299,10 +294,6 @@ public:
         nBlockFirstFraudulent = 9891737; //First block that bad serials emerged
         nBlockLastGoodCheckpoint = 9891730; //Last valid accumulator checkpoint
         nBlockEnforceInvalidUTXO = 9902850; //Start enforcing the invalid UTXO's
-        nInvalidAmountFiltered = 0; //Amount of invalid coins filtered through exchanges, that should be considered valid
-        nBlockZerocoinV2 = 1; //!> The block that zerocoin v2 becomes active
-        nEnforceNewSporkKey = 1521604800; //!> Sporks signed after Wednesday, March 21, 2018 4:00:00 AM GMT must use the new spork key
-        nRejectOldSporkKey = 1522454400; //!> Reject old spork key after Saturday, March 31, 2018 12:00:00 AM GMT
         fNewGenesisBlock = false;
         const char* pszTimestamp = "Feb 8 2018 - Eagles Win The Superbowl"; // potential mainnet override
         const CScript genesisOutputScript = CScript() << ParseHex("04b85519992dc09913984ec5122d11302375b829fc5485e03dcaa33c37079b366ee62a513b2c74c4ca983386267294b98dda77708fddccf09a63a70cab6ea6be09") << OP_CHECKSIG; // Potential Mainnet override
@@ -462,7 +453,7 @@ static CRegTestParams regTestParams;
 /**
  * Unit test
  */
-class CUnitTestParams : public CRegTestParams, public CModifiableParams
+class CUnitTestParams : public CMainParams, public CModifiableParams
 {
 public:
     CUnitTestParams()

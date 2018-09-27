@@ -208,4 +208,3 @@ const char *uvTypeName(UniValue::VType t)
     // not reached
     return NULL;
 }
-

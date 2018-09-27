@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(univalue_constructor)
 
 BOOST_AUTO_TEST_CASE(univalue_set)
 {
-    UniValue v(UniValue::VSTR, "foo");
+    UniValue v (UniValue::VSTR, "foo");
     v.clear();
     BOOST_CHECK(v.isNull());
     BOOST_CHECK_EQUAL(v.getValStr(), "");
@@ -272,4 +272,3 @@ BOOST_AUTO_TEST_CASE(univalue_readwrite)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
