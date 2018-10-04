@@ -14,8 +14,6 @@
 #include "db.h"
 #include "wallet.h"
 #endif
-#include "miner.h"
-#include "chainparams.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -23,12 +21,9 @@
 
 CClientUIInterface uiInterface;
 CWallet* pwalletMain;
-bool fSetRegTestWallet;
 
 extern bool fPrintToConsole;
 extern void noui_connect();
-
-
 
 struct TestingSetup {
     CCoinsViewDB *pcoinsdbview;
@@ -82,11 +77,6 @@ struct TestingSetup {
 };
 
 BOOST_GLOBAL_FIXTURE(TestingSetup);
-
-
-
-
-
 
 void Shutdown(void* parg)
 {

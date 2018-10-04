@@ -3382,7 +3382,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         nInputs += tx.vin.size();
         nSigOps += GetLegacySigOpCount(tx);
         if (nSigOps > nMaxBlockSigOps){
-            LogPrintf("ConnectBlock() : too many sigops");
+            LogPrintf("ConnectBlock() : too many sigops\n");
             return state.DoS(100, error("ConnectBlock() : too many sigops"), REJECT_INVALID, "bad-blk-sigops");
         }
         //Temporarily disable zerocoin transactions for maintenance
@@ -3425,14 +3425,17 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 if (zerocoinDB->ReadCoinSpend(spend.getCoinSerialNumber(), hashTxFromDB)) {
                     if(IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTxSpend)) {
                         if(!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTxSpend))
+                            LogPrintf("ConnectBlock() : zPiv with serial %s is already in the block %d\n", spend.getCoinSerialNumber().GetHex().c_str(), nHeightTxSpend);
                             return state.DoS(100, error("%s : zPiv with serial %s is already in the block %d\n",
                                                         __func__, spend.getCoinSerialNumber().GetHex(), nHeightTxSpend));
                     }
                 }
 
                 //record spend to database
-                if (!zerocoinDB->WriteCoinSpend(spend.getCoinSerialNumber(), tx.GetHash()))
+                if (!zerocoinDB->WriteCoinSpend(spend.getCoinSerialNumber(), tx.GetHash())){
+                    LogPrintf("ConnectBlock(): failed to record coin serial to database\n");
                     return error("%s : failed to record coin serial to database");
+                }    
             }
         } else if (!tx.IsCoinBase()) {
             if (!view.HaveInputs(tx)){
@@ -3455,9 +3458,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 // this is to prevent a "rogue miner" from creating
                 // an incredibly-expensive-to-validate block.
                 nSigOps += GetP2SHSigOpCount(tx, view);
-                if (nSigOps > nMaxBlockSigOps)
+                if (nSigOps > nMaxBlockSigOps){
+                    LogPrintf("ConnectBlock() : too many sigops\n");
                     return state.DoS(100, error("ConnectBlock() : too many sigops"),
                         REJECT_INVALID, "bad-blk-sigops");
+                }    
             }
 
             if (!tx.IsCoinStake())
@@ -3465,8 +3470,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             nValueIn += view.GetValueIn(tx);
 
             std::vector<CScriptCheck> vChecks;
-            if (!CheckInputs(tx, state, view, fScriptChecks, flags, false, nScriptCheckThreads ? &vChecks : NULL))
+            if (!CheckInputs(tx, state, view, fScriptChecks, flags, false, nScriptCheckThreads ? &vChecks : NULL)){
+                LogPrintf("ConnectBlock() : input check failed\n");
                 return false;
+            }    
             control.Add(vChecks);
         }
         nValueOut += tx.GetValueOut();
@@ -3515,8 +3522,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             nAmountZerocoinSpent += libzerocoin::ZerocoinDenominationToAmount(denom);
 
             // zerocoin failsafe
-            if (pindex->mapZerocoinSupply.at(denom) < 0)
+            if (pindex->mapZerocoinSupply.at(denom) < 0){
+                LogPrintf("ConnectBlock() : Block contains zerocoins that spend more than are in the available supply to spend\n");
                 return state.DoS(100, error("Block contains zerocoins that spend more than are in the available supply to spend"));
+            }    
         }
     }
 
@@ -3534,8 +3543,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 //              FormatMoney(nValueOut), FormatMoney(nValueIn),
 //             FormatMoney(nFees), FormatMoney(pindex->nMint), FormatMoney(nAmountZerocoinSpent));
 
-    if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
+    if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))){
+        LogPrintf("WriteBlockIndex for pindex failed\n");
         return error("Connect() : WriteBlockIndex for pindex failed");
+    }    
 
     int64_t nTime1 = GetTimeMicros();
     nTimeConnect += nTime1 - nTimeStart;
@@ -3547,6 +3558,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         nExpectedMint += nFees;
 
     if (!IsBlockValueValid(block, nExpectedMint, pindex->nMint)) {
+        LogPrintf("ConnectBlock() : reward pays too much (actual=%ld vs limit=%ld)\n",pindex->nMint,nExpectedMint);
         return state.DoS(100,
             error("ConnectBlock() : reward pays too much (actual=%s vs limit=%s)",
                 FormatMoney(pindex->nMint), FormatMoney(nExpectedMint)),
@@ -3578,9 +3590,12 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 }
 
                 string strError;
-                if (!ReindexAccumulators(listCheckpoints, strError) || !CalculateAccumulatorCheckpoint(pindex->nHeight, nCheckpointCalculated))
+                if (!ReindexAccumulators(listCheckpoints, strError) || !CalculateAccumulatorCheckpoint(pindex->nHeight, nCheckpointCalculated)){
+                    LogPrintf("ConnectBlock() : Accumulator Checkpoint Recalculate Failure\n");
                     return state.DoS(100, error("ConnectBlock() : failed to recalculate accumulator checkpoint"));
+                }    
             } else {
+                LogPrintf("ConnectBlock() : Accumulator Checkpoint Calculate Failure\n");
                 return state.DoS(100, error("ConnectBlock() : failed to calculate accumulator checkpoint"));
             }
         }
@@ -3590,13 +3605,17 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             return state.DoS(100, error("ConnectBlock() : accumulator does not match calculated value"));
         }
     } else if (!fVerifyingBlocks) {
-        if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint)
+        if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint){
+            LogPrintf("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10\n");
             return state.DoS(100, error("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
+        }
     }
 
 
-    if (!control.Wait())
+    if (!control.Wait()){
+        LogPrintf("Control Wait Failed\n");
         return state.DoS(100, false);
+    }    
     int64_t nTime2 = GetTimeMicros();
     nTimeVerify += nTime2 - nTimeStart;
     LogPrint("bench", "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs]\n", nInputs - 1, 0.001 * (nTime2 - nTimeStart), nInputs <= 1 ? 0 : 0.001 * (nTime2 - nTimeStart) / (nInputs - 1), nTimeVerify * 0.000001);
@@ -3608,11 +3627,14 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     if (pindex->GetUndoPos().IsNull() || !pindex->IsValid(BLOCK_VALID_SCRIPTS)) {
         if (pindex->GetUndoPos().IsNull()) {
             CDiskBlockPos pos;
-            if (!FindUndoPos(state, pindex->nFile, pos, ::GetSerializeSize(blockundo, SER_DISK, CLIENT_VERSION) + 40))
+            if (!FindUndoPos(state, pindex->nFile, pos, ::GetSerializeSize(blockundo, SER_DISK, CLIENT_VERSION) + 40)){
+                LogPrintf("ConnectBlock() : FindUndoPos failed\n");
                 return error("ConnectBlock() : FindUndoPos failed");
-            if (!blockundo.WriteToDisk(pos, pindex->pprev->GetBlockHash()))
+            }    
+            if (!blockundo.WriteToDisk(pos, pindex->pprev->GetBlockHash())){
+                LogPrintf("ConnectBlock() : Failed to write undo data\n");
                 return state.Abort("Failed to write undo data");
-
+            }
             // update nUndoPos in block index
             pindex->nUndoPos = pos.nPos;
             pindex->nStatus |= BLOCK_HAVE_UNDO;
@@ -3624,9 +3646,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
 
     if (fTxIndex)
-        if (!pblocktree->WriteTxIndex(vPos))
+        if (!pblocktree->WriteTxIndex(vPos)){
+            LogPrintf("ConnectBlock() : Failed to write transaction index\n");
             return state.Abort("Failed to write transaction index");
-
+        }
     // add this block to the view's block chain
     view.SetBestBlock(pindex->GetBlockHash());
 
@@ -4846,8 +4869,10 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
     CBlockIndex* pindexPrev = NULL;
     if (block.GetHash() != Params().HashGenesisBlock()) {
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
-        if (mi == mapBlockIndex.end())
+        if (mi == mapBlockIndex.end()){
+            LogPrintf("AcceptBlock: prev block not found %d\n",mapBlockIndex.size(),std::distance(mapBlockIndex.begin(),mi));
             return state.DoS(0, error("%s : prev block %s not found", __func__, block.hashPrevBlock.ToString().c_str()), 0, "bad-prevblk");
+        }
         pindexPrev = (*mi).second;
         if (pindexPrev->nStatus & BLOCK_FAILED_MASK) {
             //If this "invalid" block is an exact match from the checkpoints, then reconsider it
@@ -4860,14 +4885,18 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
                     return true;
                 }
             }
+            LogPrintf("AcceptBlock: badprev-blk\n");
             return state.DoS(100, error("%s : prev block %s is invalid, unable to add block %s", __func__, block.hashPrevBlock.GetHex(), block.GetHash().GetHex()),
                              REJECT_INVALID, "bad-prevblk");
         }
     }
 
-    if (block.GetHash() != Params().HashGenesisBlock() && !CheckWork(block, pindexPrev))
+    if (block.GetHash() != Params().HashGenesisBlock() && !CheckWork(block, pindexPrev)){
+        
+        LogPrintf("AcceptBlock: Genesis hash and work check failed\n");
+        
         return false;
-
+    }
 
     if (!AcceptBlockHeader(block, state, &pindex))
         return false;
@@ -4895,14 +4924,23 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
         CDiskBlockPos blockPos;
         if (dbp != NULL)
             blockPos = *dbp;
-        if (!FindBlockPos(state, blockPos, nBlockSize + 8, nHeight, block.GetBlockTime(), dbp != NULL))
+        if (!FindBlockPos(state, blockPos, nBlockSize + 8, nHeight, block.GetBlockTime(), dbp != NULL)){
+            LogPrintf("AcceptBlock: FindBlockPos failed\n");
             return error("AcceptBlock() : FindBlockPos failed");
+        }    
         if (dbp == NULL)
-            if (!WriteBlockToDisk(block, blockPos))
+        {    
+            if (!WriteBlockToDisk(block, blockPos)){
+                LogPrintf("AcceptBlock: failed to write block");
                 return state.Abort("Failed to write block");
-        if (!ReceivedBlockTransactions(block, state, pindex, blockPos))
+            }    
+        }    
+        if (!ReceivedBlockTransactions(block, state, pindex, blockPos)){
+            LogPrintf("AcceptBlock: ReceivedBlockTransactions failed");
             return error("AcceptBlock() : ReceivedBlockTransactions failed");
+        }    
     } catch (std::runtime_error& e) {
+        LogPrintf("AcceptBlock: System error %s",e.what());
         return state.Abort(std::string("System error: ") + e.what());
     }
 
@@ -4975,7 +5013,6 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     // Preliminary checks
     int64_t nStartTime = GetTimeMillis();
     bool checked = CheckBlock(*pblock, state);
-    printf("Checked Block\n");
     int nMints = 0;
     int nSpends = 0;
     for (const CTransaction tx : pblock->vtx) {
@@ -4994,7 +5031,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         LogPrintf("%s : block contains %d zWISL mints and %d zWISL spends\n", __func__, nMints, nSpends);
 
     if (!pblock->CheckBlockSignature()){
-        printf("ProcessNewBlock() : bad proof-of-stake block signature\n");
+        LogPrintf("ProcessNewBlock() : bad proof-of-stake block signature\n");
         return error("ProcessNewBlock() : bad proof-of-stake block signature");
     }
     
@@ -5002,7 +5039,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         //if we get this far, check if the prev block is our prev block, if not then request sync and return false
         BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
         if (mi == mapBlockIndex.end()) {
-            printf("prev block is not our prevblock, we have a fork a new sync is needed\n");
+            LogPrintf("prev block is not our prevblock, we have a fork a new sync is needed\n");
             pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
             return false;
         }
@@ -5013,7 +5050,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
 
         MarkBlockAsReceived (pblock->GetHash ());
         if (!checked) {
-            printf("%s : CheckBlock FAILED for block %s\n", __func__, pblock->GetHash().GetHex().c_str());
+            LogPrintf("%s : CheckBlock FAILED for block %s\n", __func__, pblock->GetHash().GetHex());
             return error ("%s : CheckBlock FAILED for block %s", __func__, pblock->GetHash().GetHex());
         }
 
@@ -5025,14 +5062,14 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         }
         CheckBlockIndex ();
         if (!ret){
-            printf("%s : AcceptBlock FAILED\n", __func__);
+            LogPrintf("%s : AcceptBlock FAILED\n", __func__);
             return error ("%s : AcceptBlock FAILED", __func__);
         }
     }
 
     if (!ActivateBestChain(state, pblock, checked))
     {
-        printf("%s : ActivateBestChain failed\n", __func__);
+        LogPrintf("%s : ActivateBestChain failed\n", __func__);
         return error("%s : ActivateBestChain failed", __func__);
     }
     if (!fLiteMode) {
@@ -5078,7 +5115,7 @@ bool TestBlockValidity(CValidationState& state, const CBlock& block, CBlockIndex
         return false;
     if (!ConnectBlock(block, state, &indexDummy, viewNew, true))
         return false;
-    LogPrintf("ConnectBlock Passed\n");
+    LogPrintf("ConnectBlock Passed\n"); 
     assert(state.IsValid());
 
     return true;
@@ -5466,16 +5503,19 @@ bool InitBlockIndex()
             unsigned int nBlockSize = ::GetSerializeSize(block, SER_DISK, CLIENT_VERSION);
             CDiskBlockPos blockPos;
             CValidationState state;
-            if (!FindBlockPos(state, blockPos, nBlockSize + 8, 0, block.GetBlockTime()))
+            if (!FindBlockPos(state, blockPos, nBlockSize + 8, 0, block.GetBlockTime())){
                 return error("LoadBlockIndex() : FindBlockPos failed");
-            if (!WriteBlockToDisk(block, blockPos))
+            }    
+            if (!WriteBlockToDisk(block, blockPos)){
                 return error("LoadBlockIndex() : writing genesis block to disk failed");
+            }    
             CBlockIndex* pindex = AddToBlockIndex(block);
-            if (!ReceivedBlockTransactions(block, state, pindex, blockPos))
+            if (!ReceivedBlockTransactions(block, state, pindex, blockPos)){
                 return error("LoadBlockIndex() : genesis block not accepted");
-            if (!ActivateBestChain(state, &block))
+            }    
+            if (!ActivateBestChain(state, &block)){
                 return error("LoadBlockIndex() : genesis block cannot be activated");
-
+            }
             // Force a chainstate write so that when we VerifyDB in a moment, it doesnt check stale data
             return FlushStateToDisk(state, FLUSH_STATE_ALWAYS);
         } catch (std::runtime_error& e) {

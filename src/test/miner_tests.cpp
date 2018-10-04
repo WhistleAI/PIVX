@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "init.h"
+#include "wallet.h"
+#include "walletdb.h"
 #include "main.h"
 #include "miner.h"
 #include "pubkey.h"
@@ -11,7 +13,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+
 BOOST_AUTO_TEST_SUITE(miner_tests)
+
+
 
 static
 struct {
@@ -51,22 +56,28 @@ struct {
 // NOTE: These tests rely on CreateNewBlock doing its own self-validation!
 BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 {
-    CScript scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
+    //CScript scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
+    //CScript scriptPubKey = CScript() << ParseHex("049394e7c9b0c18f6b0e8aa04bec927d3bfd0c1ae3a8980d1072f77d24ddad2d6b52e9edbb09fa401d9bc0bc4e7e29cdc50f6b49d36ddc3a39b15f9a2dca7ff871") << OP_CHECKSIG;
+    CReserveKey reservekey(pwalletMain);
+    CPubKey pubkey;
+    BOOST_CHECK(reservekey.GetReservedKey(pubkey));
+
+    CScript scriptPubKey = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
+    
     CBlockTemplate *pblocktemplate;
     CMutableTransaction tx,tx2;
     CScript script;
     uint256 hash;
 
-    LOCK(cs_main);
+    LOCK(pwalletMain->cs_wallet);
     Checkpoints::fEnabled = false;
 
     // Simple block creation, nothing special yet:
     BOOST_CHECK(pblocktemplate = CreateNewBlock(scriptPubKey, pwalletMain, false));
-
     // We can't make transactions until we have inputs
-    // Therefore, load 100 blocks :)
+    // Therefore, load nMaturity blocks :)
     std::vector<CTransaction*>txFirst;
-    for (unsigned int i = 0; i < sizeof(blockinfo)/sizeof(*blockinfo); ++i)
+    for (unsigned int i = 0; i < (unsigned int)(Params().COINBASE_MATURITY()*5); ++i)
     {
         CBlock *pblock = &pblocktemplate->block; // pointer for convenience
         pblock->nVersion = 1;
@@ -88,6 +99,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     }
     delete pblocktemplate;
 
+    //
     // Just to make sure we can still make simple blocks
     BOOST_CHECK(pblocktemplate = CreateNewBlock(scriptPubKey, pwalletMain, false));
     delete pblocktemplate;

@@ -13,7 +13,8 @@
 #include "chainparams.h"
 #include "masternode.h"
 #include "miner.h"
-
+#include "pubkey.h"
+#include "masternode.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -25,31 +26,7 @@ extern void noui_connect();
 extern CWallet* pwalletMain;
 
 
-struct RegTestSetup{
-    CCoinsViewDB *pcoinsdbview;
-    boost::filesystem::path pathTemp;
-    boost::thread_group threadGroup;
-    
-   
-    RegTestSetup(){
-
-            SelectParams(CBaseChainParams::REGTEST);
-
-
-
-    }
-
-
-
-
-    ~RegTestSetup()
-    {
-
-    }
-
-};
-
-BOOST_FIXTURE_TEST_SUITE(masternode_tests, RegTestSetup)
+BOOST_AUTO_TEST_SUITE(masternode_tests)
 
 void CheckStatus(std::string stExpected , bool unitTest, string walletFile)
 {
@@ -60,7 +37,7 @@ void CheckStatus(std::string stExpected , bool unitTest, string walletFile)
     BOOST_CHECK_MESSAGE(stActual == stExpected, strprintf("Incorrect Status: %s != %s",stActual.c_str(),stExpected.c_str()));
 }
 
-
+/*
 
 CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const CScript& scriptPubKey)
 {
@@ -88,10 +65,9 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 }
 void ProcessBlocksTillMaturityTransactions(CKey& coinbaseKey,std::vector<CTransaction>& coinbaseTxns)
 {
-     
     coinbaseKey.MakeNewKey(true);
     CScript scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
-    for (int i = 0; i < Params().COINBASE_MATURITY()*2; i++)
+    for (int i = 0; i < Params().COINBASE_MATURITY()*20; i++)
     {
         std::vector<CMutableTransaction> noTxns;
         printf("Coinbase Maturity Iter:%i\n",Params().COINBASE_MATURITY());
@@ -101,12 +77,49 @@ void ProcessBlocksTillMaturityTransactions(CKey& coinbaseKey,std::vector<CTransa
 }
 
 
+ */
+
 BOOST_AUTO_TEST_CASE(masternode_test)
-{       
-     //CKey coinbaseKey;// private/public key needed to spend coinbase transactions
-     //std::vector<CTransaction> coinbaseTxns; // For convenience, coinbase transactions
-     //ProcessBlocksTillMaturityTransactions(coinbaseKey,coinbaseTxns);
-    //BOOST_CHECK(pblocktemplate = CreateNewBlock(scriptPubKey, pwalletMain, false));
+{    
+    LOCK(pwalletMain->cs_wallet);
+    
+    CReserveKey reservekey(pwalletMain);
+    CBlockTemplate *pblocktemplate;
+    
+    unsigned int nExtraNonce = 0;
+    
+    for (unsigned int i = 0; i < (unsigned int)(Params().COINBASE_MATURITY()*5); ++i)
+    {
+        pblocktemplate = CreateNewBlockWithKey(reservekey, pwalletMain, false);
+        CBlock* pblock = &pblocktemplate->block;
+        {
+            LOCK(cs_main);
+            IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
+        }
+        while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits)) {
+            // Yes, there is a chance every nonce could fail to satisfy the -regtest
+            // target -- 1 in 2^(2^32). That ain't gonna happen.
+            ++pblock->nNonce;
+        }
+        CValidationState state;
+        ProcessNewBlock(state, NULL, pblock);
+    }    
+    delete pblocktemplate;
+    /*
+    CPubKey pubkey;
+    BOOST_CHECK(reservekey.GetReservedKey(pubkey));
+
+    CScript scriptPubKey = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
+    BOOST_CHECK(pblocktemplate = CreateNewBlock(scriptPubKey, pwalletMain, false));
+    CBlock* pblock = &pblocktemplate->block;
+    BOOST_CHECK(ProcessNewBlock(state, NULL, pblock));
+    
+    delete pblocktemplate;
+     */
+    
+    printf("Height: %d\n",chainActive.Height());
+    printf("Balance: %ld",pwalletMain->GetBalance());
+    BOOST_CHECK(pwalletMain->GetBalance() > MASTERNODE_COLLATERAL_AMOUNT);
     
     /*
      * Create an Set up masternode

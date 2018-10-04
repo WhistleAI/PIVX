@@ -24,6 +24,7 @@ BOOST_AUTO_TEST_SUITE(rpc_wallet_tests)
 
 BOOST_AUTO_TEST_CASE(rpc_addmultisig)
 {
+    SelectParams(CBaseChainParams::UNITTEST);
     LOCK(pwalletMain->cs_wallet);
 
     rpcfn_type addmultisig = tableRPC["addmultisigaddress"]->actor;
@@ -65,6 +66,7 @@ BOOST_AUTO_TEST_CASE(rpc_addmultisig)
 
 BOOST_AUTO_TEST_CASE(rpc_wallet)
 {
+    SelectParams(CBaseChainParams::UNITTEST);
     // Test RPC calls for various wallet statistics
     Value r;
 

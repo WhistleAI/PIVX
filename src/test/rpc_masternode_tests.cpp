@@ -8,13 +8,14 @@
 #include "txdb.h"
 #include "ui_interface.h"
 #include "util.h"
-
+#include "chainparams.h"
 #include "rpcserver.h"
 #include "rpcclient.h"
 #include "key.h"
 #include "base58.h"
 #include "wallet.h"
 #include "uint256.h"
+#include "masternode.h"
 
 
 #include <boost/algorithm/string.hpp>
@@ -34,27 +35,7 @@ extern Value CallRPC(string args);
 
 extern CWallet* pwalletMain;
 
-struct RegTestSetup{
- 
-    
-   
-    RegTestSetup(){
-            
-             SelectParams(CBaseChainParams::REGTEST);
-             
-    }
-
-
-
-
-    ~RegTestSetup()
-    {
-
-    }
-
-};
-
-BOOST_FIXTURE_TEST_SUITE(rpc_masternode_tests, RegTestSetup)
+BOOST_AUTO_TEST_SUITE(rpc_masternode_tests)
         
 BOOST_AUTO_TEST_CASE(rpc_masternode)
 {
@@ -62,32 +43,29 @@ BOOST_AUTO_TEST_CASE(rpc_masternode)
         LOCK(pwalletMain->cs_wallet);
         int64_t nBalance2 = pwalletMain->GetBalance();
         printf("get nBalance:%ld\n",nBalance2);
-        /*
-        CPubKey pubkey = pwalletMain->GenerateNewKey();
-        CBitcoinAddress newAddress = CBitcoinAddress(CTxDestination(pubkey.GetID()));
+        
+        //CPubKey pubkey = pwalletMain->GenerateNewKey();
+        //CBitcoinAddress newAddress = CBitcoinAddress(CTxDestination(pubkey.GetID()));
         Value retValue;
 
+        BOOST_CHECK_NO_THROW(retValue = CallRPC("getgenerate")); 
+       cout << "generate:" << retValue.get_bool() << "\n";
+        
+       string callStr = strprintf("setgenerate true %d",(Params().COINBASE_MATURITY()*20));
+       BOOST_CHECK_NO_THROW(retValue = CallRPC(callStr)); 
 
-
-
-        BOOST_CHECK_NO_THROW(retValue = CallRPC("getblockhash 0")); 
-        printf("getblockhash:%s\n",retValue.get_str().c_str());
 
        BOOST_CHECK_NO_THROW(retValue = CallRPC("getblockcount")); 
-       //printf("getblockcount:%i\n",retValue.get_int());
        cout << "isNum:" << retValue.get_int() << "\n";
-         */
+        
 
         /*********************************
         * 		getbalance
         *********************************/
 
-       //BOOST_CHECK_NO_THROW(retValue = CallRPC("getbalance ")); 
-      // printf("getbalance:%lf\n",retValue.get_real());
-      // BOOST_CHECK(retValue.get_real() > 100000);
-      // printf("getbalance:%lf\n",retValue.get_real());
-       //BOOST_CHECK_NO_THROW(retValue = CallRPC("getbalance " + strAccount));
-       //BOOST_CHECK(retValue.get_real() > 100000.0);
+       BOOST_CHECK_NO_THROW(retValue = CallRPC("getbalance ")); 
+       printf("getbalance:%lf\n",retValue.get_real());
+       BOOST_CHECK(retValue.get_real() > MASTERNODE_COLLATERAL_AMOUNT);
 
 } 
 
