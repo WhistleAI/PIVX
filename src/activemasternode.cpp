@@ -68,13 +68,13 @@ void CActiveMasternode::ManageStatus()
         }
 
         if (Params().NetworkID() == CBaseChainParams::MAIN) {
-            if (service.GetPort() != 51472) {
-                notCapableReason = strprintf("Invalid port: %u - only 51472 is supported on mainnet.", service.GetPort());
+            if (service.GetPort() != 55472) {
+                notCapableReason = strprintf("Invalid port: %u - only 55472 is supported on mainnet.", service.GetPort());
                 LogPrintf("CActiveMasternode::ManageStatus() - not capable: %s\n", notCapableReason);
                 return;
             }
-        } else if (service.GetPort() == 51472) {
-            notCapableReason = strprintf("Invalid port: %u - 51472 is only supported on mainnet.", service.GetPort());
+        } else if (service.GetPort() == 55472) {
+            notCapableReason = strprintf("Invalid port: %u - 55472 is only supported on mainnet.", service.GetPort());
             LogPrintf("CActiveMasternode::ManageStatus() - not capable: %s\n", notCapableReason);
             return;
         }
@@ -84,7 +84,7 @@ void CActiveMasternode::ManageStatus()
         CNode* pnode = ConnectNode((CAddress)service, NULL, false);
         if (!pnode) {
             notCapableReason = "Could not connect to " + service.ToString();
-            LogPrintf("CActiveMasternode::ManageStatus() - not capable: %s\n", notCapableReason);
+            LogPrintf("CActiveMasternode::ManageStatus() - not capable: %s : %d\n", notCapableReason,pnode);
             return;
         }
         pnode->Release();
@@ -260,20 +260,19 @@ bool CActiveMasternode::Register(std::string strService, std::string strKeyMaste
     }
 
     if (!GetMasterNodeVin(vin, pubKeyCollateralAddress, keyCollateralAddress, strTxHash, strOutputIndex)) {
-        errorMessage = strprintf("Could not allocate vin %s:%s for masternode %s", strTxHash, strOutputIndex, strService);
         LogPrintf("CActiveMasternode::Register() - %s\n", errorMessage);
         return false;
     }
 
     CService service = CService(strService);
     if (Params().NetworkID() == CBaseChainParams::MAIN) {
-        if (service.GetPort() != 51472) {
-            errorMessage = strprintf("Invalid port %u for masternode %s - only 51472 is supported on mainnet.", service.GetPort(), strService);
+        if (service.GetPort() != 55472) {
+            errorMessage = strprintf("Invalid port %u for masternode %s - only 55472 is supported on mainnet.", service.GetPort(), strService);
             LogPrintf("CActiveMasternode::Register() - %s\n", errorMessage);
             return false;
         }
-    } else if (service.GetPort() == 51472) {
-        errorMessage = strprintf("Invalid port %u for masternode %s - 51472 is only supported on mainnet.", service.GetPort(), strService);
+    } else if (service.GetPort() == 55472) {
+        errorMessage = strprintf("Invalid port %u for masternode %s - 55472 is only supported on mainnet.", service.GetPort(), strService);
         LogPrintf("CActiveMasternode::Register() - %s\n", errorMessage);
         return false;
     }
@@ -288,6 +287,7 @@ bool CActiveMasternode::Register(CTxIn vin, CService service, CKey keyCollateral
     CMasternodeBroadcast mnb;
     CMasternodePing mnp(vin);
     if (!mnp.Sign(keyMasternode, pubKeyMasternode)) {
+        
         errorMessage = strprintf("Failed to sign ping, vin: %s", vin.ToString());
         LogPrintf("CActiveMasternode::Register() -  %s\n", errorMessage);
         return false;
@@ -371,6 +371,7 @@ bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secr
 
     vector<COutput> possibleCoins = SelectCoinsMasternode();
     COutput* selectedOutput;
+    
 
     // Find the vin
     if (!strTxHash.empty()) {
@@ -469,12 +470,15 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode()
         BOOST_FOREACH (COutPoint outpoint, confLockedCoins)
             pwalletMain->LockCoin(outpoint);
     }
+    
+    
 
     // Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
+        
         if (out.tx->vout[out.i].nValue == MASTERNODE_COLLATERAL) { //exactly
             filteredCoins.push_back(out);
-        }
+        }   
     }
     return filteredCoins;
 }
